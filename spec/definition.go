@@ -35,5 +35,13 @@ type MockSpec struct {
 
 		// ResponseTemplate that can contain template expressions for returning the response
 		ResponseTemplate string `yaml:"response_template"`
+
+		// ResponseFile the file bytes will be read and processed as response
+		ResponseFile string `yaml:"response_file"`
 	} `yaml:"action"`
+}
+
+// ResponseModel will be data model passed to the response template
+type ResponseModel struct {
+	RequestPath string
 }

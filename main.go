@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -14,15 +16,41 @@ const pathSeparator = "/"
 var serverSpec *spec.ServerSpec
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "<h1>Request Details</h1>")
-
-	for header, values := range r.Header {
-		fmt.Fprintf(w, "<h3> header %v values: %v </h3>", header, values)
+	if serverSpec == nil {
+		http.Error(w, "server spec is nil", http.StatusInternalServerError)
+		return
 	}
+	log.Printf("request path is : %v", r.URL.Path)
 
-	pathComponents := strings.Split(r.URL.Path, pathSeparator)
+	for _, mock := range serverSpec.Mocks {
+		if strings.Compare(r.URL.Path[1:], mock.MatchPath) == 0 {
 
-	fmt.Fprintf(w, "<b> path components %v </b>", pathComponents)
+			for header, val := range mock.Action.ResponseHeaders {
+				w.Header().Set(header, val)
+			}
+
+			if mock.Action.ResponseTemplate != "" {
+				tmpl, err := template.New(mock.MatchPath).Parse(mock.Action.ResponseTemplate)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("error processing template : %v error %v", mock.Action.ResponseTemplate, err), http.StatusInternalServerError)
+					return
+				}
+				reponseModel := spec.ResponseModel{RequestPath: r.URL.Path}
+				err = tmpl.Execute(w, reponseModel)
+				return
+			}
+
+			responseBytes, err := ioutil.ReadFile(mock.Action.ResponseFile)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("error reading response file : %v", err), http.StatusInternalServerError)
+				return
+			}
+			w.Write(responseBytes)
+			return
+		}
+	}
+	http.Error(w, fmt.Sprintf("no match found for path : %v", r.URL.Path[1:]), http.StatusInternalServerError)
+	return
 }
 
 func logSpecDetails() {
