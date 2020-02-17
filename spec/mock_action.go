@@ -26,20 +26,30 @@ func prettyLogRequest(r *http.Request) {
 	log.Println("-----------------------------------------------------")
 	log.Printf("reqeust path    : %v", r.URL.Path)
 	log.Printf("request from    : %v", r.RemoteAddr)
+	log.Printf("request method  : %v", r.Method)
 	log.Printf("HTTP version    : %v", r.Proto)
-	log.Println()
-	log.Println("request headers:")
-	log.Println("----------------")
-	for header, vals := range r.Header {
-		log.Printf("%v : %v", header, vals)
+	if len(r.Header) > 0 {
+		log.Println()
+		log.Println("request headers:")
+		log.Println("----------------")
+		for header, vals := range r.Header {
+			log.Printf("%v : %v", header, vals)
+		}
 	}
-	log.Println()
-	log.Println("requst params:")
-	log.Println("--------------")
-	for param, vals := range r.URL.Query() {
-		log.Printf("%v : %v", param, vals)
+	if len(r.URL.Query()) > 0 {
+		log.Println()
+		log.Println("requst params:")
+		log.Println("--------------")
+		for param, vals := range r.URL.Query() {
+			log.Printf("%v : %v", param, vals)
+		}
 	}
 	log.Println("-----------------------------------------------------")
+}
+
+// MatchMock check to see if this mock spec is a match for the incoming request
+func (mockSpec *MockSpec) MatchMock(r *http.Request) bool {
+	return strings.Compare(r.URL.Path[1:], mockSpec.MatchPath) == 0
 }
 
 // PerformMockAction perfroms the HTTP mock action based on ServerSpec and writes a
@@ -49,8 +59,7 @@ func (spec *ServerSpec) PerformMockAction(w http.ResponseWriter, r *http.Request
 	prettyLogRequest(r)
 
 	for _, mock := range spec.Mocks {
-		if strings.Compare(r.URL.Path[1:], mock.MatchPath) == 0 {
-
+		if mock.MatchMock(r) {
 			for header, val := range mock.Action.ResponseHeaders {
 				w.Header().Set(header, val)
 			}
@@ -58,7 +67,7 @@ func (spec *ServerSpec) PerformMockAction(w http.ResponseWriter, r *http.Request
 			if mock.Action.ResponseTemplate != "" {
 				tmpl, err := template.New(mock.MatchPath).Parse(mock.Action.ResponseTemplate)
 				if err != nil {
-					http.Error(w, fmt.Sprintf("error processing template : %v error %v", mock.Action.ResponseTemplate, err), http.StatusInternalServerError)
+					serverError(w, fmt.Sprintf("error processing template : %v error %v", mock.Action.ResponseTemplate, err))
 					return
 				}
 				reponseModel := ResponseModel{RequestPath: r.URL.Path}
@@ -66,15 +75,27 @@ func (spec *ServerSpec) PerformMockAction(w http.ResponseWriter, r *http.Request
 				return
 			}
 
-			responseBytes, err := ioutil.ReadFile(mock.Action.ResponseFile)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("error reading response file : %v", err), http.StatusInternalServerError)
+			if mock.Action.ResponseFile != "" {
+				responseBytes, err := ioutil.ReadFile(mock.Action.ResponseFile)
+				if err != nil {
+					serverError(w, fmt.Sprintf("error reading response file : %v", err))
+					return
+				}
+				w.Write(responseBytes)
 				return
 			}
-			w.Write(responseBytes)
-			return
+
+			if mock.Action.ResponseString != "" {
+				w.Write([]byte(mock.Action.ResponseString))
+				return
+			}
+			serverError(w, fmt.Sprintf("no response defined for path : %v", mock.MatchPath))
 		}
 	}
-	http.Error(w, fmt.Sprintf("no match found for path : %v", r.URL.Path[1:]), http.StatusInternalServerError)
+	serverError(w, fmt.Sprintf("no match found for path : %v", r.URL.Path[1:]))
 	return
+}
+
+func serverError(w http.ResponseWriter, errorMessage string) {
+	http.Error(w, errorMessage, http.StatusInternalServerError)
 }

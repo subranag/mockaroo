@@ -17,6 +17,12 @@ type ServerSpec struct {
 	Mocks []MockSpec `yaml:"mock_specs"`
 }
 
+// MockMatcher matches a request and returns true if match false otherwise
+// the complete context of the http request is taken into account
+type MockMatcher interface {
+	MatchMock(r *http.Request) bool
+}
+
 // MockSpec defines the mocking spec for mockaroo
 // the mock spec is usually writeen in a JSON mock file
 // read below for the specifications of the MockFile
@@ -46,6 +52,9 @@ type MockSpec struct {
 
 		// ResponseFile the file bytes will be read and processed as response
 		ResponseFile string `yaml:"response_file"`
+
+		// ResponseString plain response string which is simply echoed back as response
+		ResponseString string `yaml:"response_string"`
 	} `yaml:"action"`
 }
 
