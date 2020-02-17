@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"text/template"
+	"time"
 )
 
 // LogSpecDefinition logs all the specs configured to the log use this function display
@@ -18,6 +20,8 @@ func (spec *ServerSpec) LogSpecDefinition() {
 		log.Printf("mock path    : %v", mock.MatchPath)
 		log.Printf("mock method  : %v", mock.HTTPMethod)
 		log.Printf("match params : %v", mock.MatchRequestParams)
+		log.Printf("min delay ms : %v", mock.Action.MinDelayMillis)
+		log.Printf("max delay ms : %v", mock.Action.MaxDelayMillis)
 	}
 	log.Println(" ")
 }
@@ -52,6 +56,20 @@ func (mockSpec *MockSpec) MatchMock(r *http.Request) bool {
 	return strings.Compare(r.URL.Path[1:], mockSpec.MatchPath) == 0
 }
 
+// CauseDelay causes delay for this mock as per the dealy spec in the Action section of mock spec
+func (mockSpec *MockSpec) CauseDelay() {
+	if mockSpec.Action.MinDelayMillis < mockSpec.Action.MaxDelayMillis {
+		sleepFor := int64(mockSpec.Action.MinDelayMillis) + rand.Int63n(int64(mockSpec.Action.MaxDelayMillis-mockSpec.Action.MinDelayMillis))
+		log.Printf("will sleep for : %v millis", sleepFor)
+		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
+		return
+	}
+
+	//otherwise just sleep for the min delay
+	log.Printf("will sleep for exactly : %v millis", mockSpec.Action.MinDelayMillis)
+	time.Sleep(time.Duration(mockSpec.Action.MinDelayMillis) * time.Millisecond)
+}
+
 // PerformMockAction perfroms the HTTP mock action based on ServerSpec and writes a
 // suitable response
 func (spec *ServerSpec) PerformMockAction(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +81,9 @@ func (spec *ServerSpec) PerformMockAction(w http.ResponseWriter, r *http.Request
 			for header, val := range mock.Action.ResponseHeaders {
 				w.Header().Set(header, val)
 			}
+
+			// cause the specified delay
+			mock.CauseDelay()
 
 			if mock.Action.ResponseTemplate != "" {
 				tmpl, err := template.New(mock.MatchPath).Parse(mock.Action.ResponseTemplate)

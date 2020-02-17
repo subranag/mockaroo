@@ -44,6 +44,15 @@ type MockSpec struct {
 		// ResponseCode to be sent back in response to this matched MockSpec
 		ResponseCode int `yaml:"response_code"`
 
+		// MinDelayMillis the minimun delay in millis before sending the mock response
+		// if not present there will be no mock delay
+		MinDelayMillis uint64 `yaml:"min_delay_ms"`
+
+		// MaxDelayMillis the maximum delay in millis before sending the mock response
+		// if MinDelayMillis are specified and MaxDelayMillis > MinDelayMillis
+		// the mock response will be delayed by RANDOM(MinDelayMillis, MaxDelayMillis)
+		MaxDelayMillis uint64 `yaml:"max_delay_ms"`
+
 		// ResponseHeaders that need to be sent as a part of this match spec
 		ResponseHeaders map[string]string `yaml:"response_headers"`
 
