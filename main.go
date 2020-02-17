@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -46,5 +47,5 @@ func main() {
 	log.Print("starting mockaroo....")
 	serverSpec.LogSpecDefinition()
 	http.HandleFunc("/", mainHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", serverSpec.Port), nil))
 }
