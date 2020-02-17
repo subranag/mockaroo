@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"io/ioutil"
+	"flag"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/subranag/mockaroo/spec"
 )
@@ -20,53 +17,23 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "server spec is nil", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("request path is : %v", r.URL.Path)
-
-	for _, mock := range serverSpec.Mocks {
-		if strings.Compare(r.URL.Path[1:], mock.MatchPath) == 0 {
-
-			for header, val := range mock.Action.ResponseHeaders {
-				w.Header().Set(header, val)
-			}
-
-			if mock.Action.ResponseTemplate != "" {
-				tmpl, err := template.New(mock.MatchPath).Parse(mock.Action.ResponseTemplate)
-				if err != nil {
-					http.Error(w, fmt.Sprintf("error processing template : %v error %v", mock.Action.ResponseTemplate, err), http.StatusInternalServerError)
-					return
-				}
-				reponseModel := spec.ResponseModel{RequestPath: r.URL.Path}
-				err = tmpl.Execute(w, reponseModel)
-				return
-			}
-
-			responseBytes, err := ioutil.ReadFile(mock.Action.ResponseFile)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("error reading response file : %v", err), http.StatusInternalServerError)
-				return
-			}
-			w.Write(responseBytes)
-			return
-		}
-	}
-	http.Error(w, fmt.Sprintf("no match found for path : %v", r.URL.Path[1:]), http.StatusInternalServerError)
-	return
-}
-
-func logSpecDetails() {
-	log.Printf("mock server will start on port : %v", serverSpec.Port)
-	for _, mock := range serverSpec.Mocks {
-		log.Println("")
-		log.Printf("mock path    : %v", mock.MatchPath)
-		log.Printf("mock method  : %v", mock.HTTPMethod)
-		log.Printf("match params : %v", mock.MatchRequestParams)
-	}
-	log.Println(" ")
+	// now let spec just handle the request
+	serverSpec.PerformMockAction(w, r)
 }
 
 func main() {
+
+	specFilePath := flag.String("specFile", "", "path to the mock spec file <required argument>")
+
+	flag.Parse()
+
+	if *specFilePath == "" {
+		flag.Usage()
+		return
+	}
+
 	var err error
-	if serverSpec, err = spec.ReadSpecFile("/var/tmp/sample_spec.yaml"); err != nil {
+	if serverSpec, err = spec.ReadSpecFile(*specFilePath); err != nil {
 		log.Fatalf("error reading spec file %v", err)
 		return
 	}
@@ -76,9 +43,8 @@ func main() {
 		return
 	}
 
-	logSpecDetails()
-
 	log.Print("starting mockaroo....")
+	serverSpec.LogSpecDefinition()
 	http.HandleFunc("/", mainHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

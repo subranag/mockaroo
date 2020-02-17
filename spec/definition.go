@@ -1,5 +1,13 @@
 package spec
 
+import "net/http"
+
+// MockAction defines the action that needs to be taken to process
+// a given HTTP request and mock and equvalent reponse
+type MockAction interface {
+	PerformMockAction(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerSpec holds the details about the mock server
 type ServerSpec struct {
 	// Port on which this mock server needs to run
