@@ -11,8 +11,12 @@ func main() {
 	mockConfig := flag.String("conf", "", "the mockaroo config file")
 	flag.Parse()
 
-	fmt.Printf("starting server with config file : %s\n", *mockConfig)
+	if len(*mockConfig) == 0 {
+		flag.Usage()
+		return
+	}
 
+	fmt.Printf("starting server with config file : %s\n", *mockConfig)
 	// parse config
 	conf, err := mockaroo.LoadConfig(mockConfig)
 	if err != nil {
