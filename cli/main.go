@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/subranag/mockaroo"
 )
@@ -13,7 +14,7 @@ func main() {
 
 	if len(*mockConfig) == 0 {
 		flag.Usage()
-		return
+		os.Exit(2)
 	}
 
 	fmt.Printf("starting server with config file : %s\n", *mockConfig)

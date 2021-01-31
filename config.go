@@ -27,9 +27,17 @@ type ServerConf struct {
 }
 
 type Mock struct {
-	Name         string            `hcl:"name,label"`
-	Path         *string           `hcl:"path"`
-	Verb         *string           `hcl:"verb"`
+	Name     string    `hcl:"name,label"`
+	Request  *Request  `hcl:"request,block"`
+	Response *Response `hcl:"response,block"`
+}
+
+type Request struct {
+	Path *string `hcl:"path"`
+	Verb *string `hcl:"verb"`
+}
+
+type Response struct {
 	ResponseBody *string           `hcl:"response_body"`
 	Headers      map[string]string `hcl:"headers"`
 }

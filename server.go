@@ -40,17 +40,17 @@ func (s *muxServer) addRoutes() {
 	mocks := s.conf.ServerConfig.Mocks
 	router := s.router
 	for _, mock := range mocks {
-		router.HandleFunc(*mock.Path, genHandleFunc(&mock))
+		router.HandleFunc(*mock.Request.Path, genHandleFunc(&mock))
 	}
 }
 
 func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
 	return func(resp http.ResponseWriter, req *http.Request) {
-		for key, val := range mock.Headers {
+		for key, val := range mock.Response.Headers {
 			resp.Header().Add(key, val)
 		}
 
-		fmt.Fprintf(resp, "%s", *mock.ResponseBody)
+		fmt.Fprintf(resp, "%s", *mock.Response.ResponseBody)
 	}
 }
 
