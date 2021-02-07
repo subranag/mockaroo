@@ -22,7 +22,12 @@ func main() {
 	conf, err := mockaroo.LoadConfig(mockConfig)
 	if err != nil {
 		fmt.Printf("%v\n", err)
+		os.Exit(2)
 	}
 	s := mockaroo.NewServer(conf)
-	s.Start()
+
+	if err := s.Start(); err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(2)
+	}
 }
