@@ -40,4 +40,11 @@ server {
             EOF
         }
     }
+
+    mock "image_resp" {
+        request {
+            path = "/test/**/test"
+            verb = "GET"
+        }
+    }
 }
