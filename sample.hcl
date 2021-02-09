@@ -43,7 +43,7 @@ server {
 
     mock "image_resp" {
         request {
-            path = "/test/**/test"
+            path = "/"
             verb = "GET"
         }
     }

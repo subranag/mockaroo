@@ -44,8 +44,9 @@ type Mock struct {
 }
 
 type Request struct {
-	Path *string `hcl:"path"`
-	Verb *string `hcl:"verb"`
+	Path       *string `hcl:"path"`
+	PathPrefix bool    // should this path be a prefix formulated from the Path
+	Verb       *string `hcl:"verb"`
 }
 
 type Response struct {
@@ -86,61 +87,52 @@ func (c *Config) validateConfig() error {
 	listenAddrRegex := regexp.MustCompile(`(?P<host>.+):(?P<port>\d+)`)
 
 	sc := c.ServerConfig
+	fp := *c.configFilePath
 
 	if sc.ListenAddr == nil || *sc.ListenAddr == "" {
-		return c.invalidConfErr(fmt.Sprintf("%s field in file null or empty", listenAddrField))
+		errMsg := fmt.Sprintf("%s field in file null or empty", listenAddrField)
+		return invalidConfErr(fp, errMsg)
 	}
 
 	res := listenAddrRegex.FindStringSubmatch(*sc.ListenAddr)
 
 	if len(res) != 3 {
-		return c.invalidConfErr(fmt.Sprintf("expected field %s to be \"<server>:<port>\" found \"%s\"", listenAddrField, *sc.ListenAddr))
+		errMsg := fmt.Sprintf("expected field %s to be \"<server>:<port>\" found \"%s\"", listenAddrField, *sc.ListenAddr)
+		return invalidConfErr(fp, errMsg)
 	}
 
 	// not worried about err here see regex we match \d+
 	port, _ := strconv.Atoi(res[2])
 	if port < 0 || port > maxPortNum {
-		return c.invalidConfErr(fmt.Sprintf("port numbers can only be 0 < port < %v found %v in %s=%s", maxPortNum, port, listenAddrField, *sc.ListenAddr))
+		errMsg := fmt.Sprintf("port numbers can only be 0 < port < %v found %v in %s=%s", maxPortNum, port, listenAddrField, *sc.ListenAddr)
+		return invalidConfErr(fp, errMsg)
 	}
 
 	mocks := c.ServerConfig.Mocks
 
 	if len(mocks) == 0 {
-		return c.invalidConfErr("0 mocks configured, configure mocks using mock:{...} block")
+		return invalidConfErr(fp, "0 mocks configured, configure mocks using mock:{...} block")
 	}
 
 	// now validate all mocks
 	for i, mock := range mocks {
 		if strings.TrimSpace(mock.Name) == "" {
-			return c.invalidConfErr(fmt.Sprintf("invalid empty name for block in index %v, please prvide a valid name", i))
+			errMsg := fmt.Sprintf("invalid empty name for block in index %v, please prvide a valid name", i)
+			return invalidConfErr(fp, errMsg)
 		}
 
 		if mock.Request == nil {
-			return c.invalidConfErr(fmt.Sprintf("request section missing for mock \"%s\"", mock.Name))
+			errMsg := fmt.Sprintf("request section missing for mock \"%s\"", mock.Name)
+			return invalidConfErr(fp, errMsg)
 		}
 
-		if mock.Request.Path == nil {
-			return c.invalidConfErr(fmt.Sprintf("request path cannot be nil for mock \"%s\"", mock.Name))
+		if err := validPath(fp, &mock); err != nil {
+			return err
 		}
-
-		pathRegexp := regexp.MustCompile(`/((?:[^/]*/)*)(.*)`)
-		res := pathRegexp.FindAllString(*mock.Request.Path, -1)
-		if len(res) == 0 {
-			return c.invalidConfErr(fmt.Sprintf("not a valid path:%s for mock \"%s\"", *mock.Request.Path, mock.Name))
-		}
-
-		improperStar := regexp.MustCompile(`/\w+\*|/\*\w+|\s\*|\*\s`)
-		res = improperStar.FindAllString(*mock.Request.Path, -1)
-		if len(res) > 0 {
-			return c.invalidConfErr(fmt.Sprintf("\"*\" charecter present in improper place in path:%s for mock \"%s\"", *mock.Request.Path, mock.Name))
-		}
-
-		prefixPathRegexp := regexp.MustCompile(`/\*+`)
-		res = prefixPathRegexp.FindAllString(*mock.Request.Path, -1)
-		fmt.Printf("%v\n", res)
 
 		if mock.Response == nil {
-			return c.invalidConfErr(fmt.Sprintf("request section missing for mock \"%s\"", mock.Name))
+			errMsg := fmt.Sprintf("request section missing for mock \"%s\"", mock.Name)
+			return invalidConfErr(fp, errMsg)
 		}
 	}
 
@@ -148,6 +140,65 @@ func (c *Config) validateConfig() error {
 	return nil
 }
 
-func (c *Config) invalidConfErr(message string) error {
-	return &InvalidConfigFile{path: *c.configFilePath, message: message}
+func validPath(filePath string, mock *Mock) error {
+	path := mock.Request.Path
+	if path == nil || strings.TrimSpace(*path) == "" {
+		errMsg := fmt.Sprintf("request path cannot be nil/\"\" for mock \"%s\"", mock.Name)
+		return invalidConfErr(filePath, errMsg)
+	}
+
+	//split the path
+	parts := strings.Split(*path, "/")
+
+	// the path does not start with a slash it is an error
+	if parts[0] != "" {
+		errMsg := fmt.Sprintf("request path starts with:\"%v\" anot not \"/\" for mock \"%s\"", parts[0], mock.Name)
+		return invalidConfErr(filePath, errMsg)
+	}
+
+	for i := 1; i < len(parts); i++ {
+		part := parts[i]
+		switch {
+		case strings.TrimSpace(part) == "":
+			if i+1 != len(parts) {
+				errMsg := fmt.Sprintf("empty path element path \"%v\" \n", *path)
+				errMsg = fmt.Sprintf("%s \" \" white space or empty string cannot be in path; mock is \"%s\"", errMsg, mock.Name)
+				return invalidConfErr(filePath, errMsg)
+			}
+		case strings.Contains(part, "**"):
+			if part != "**" || i+1 != len(parts) {
+				errMsg := fmt.Sprintf("bad path element \"%v\" in path \"%v\" \n", part, *path)
+				errMsg = fmt.Sprintf("%s \"**\" should occur as it is and only at the end of the path for mock \"%s\"", errMsg, mock.Name)
+				return invalidConfErr(filePath, errMsg)
+			}
+			parts[i] = ""
+			mock.Request.PathPrefix = true // this path contains path prefix
+		case strings.Contains(part, "*"):
+			if part != "*" {
+				errMsg := fmt.Sprintf("bad path element \"%v\" in path \"%v\" \n", part, *path)
+				errMsg = fmt.Sprintf("%s \"*\" should occur as it is; mock is \"%s\"", errMsg, mock.Name)
+				return invalidConfErr(filePath, errMsg)
+			}
+			// all looks good make sure we substitute a variable
+			parts[i] = fmt.Sprintf("{pvar%v}", i)
+		case strings.Contains(part, "{") || strings.Contains(part, "}"):
+			varMatchRegexp := regexp.MustCompile(`^\{.+\}$`)
+			if !varMatchRegexp.MatchString(part) {
+				errMsg := fmt.Sprintf("bad path element \"%v\" in path \"%v\" \n", part, *path)
+				errMsg = fmt.Sprintf("%s variable names should be of form \"{name}\"; mock is \"%s\"", errMsg, mock.Name)
+				return invalidConfErr(filePath, errMsg)
+			}
+		default:
+			// all looks good
+		}
+	}
+
+	fmt.Println(strings.Join(parts, "/"))
+
+	//path looks good
+	return nil
+}
+
+func invalidConfErr(filPath, message string) error {
+	return &InvalidConfigFile{path: filPath, message: message}
 }
