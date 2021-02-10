@@ -43,8 +43,19 @@ server {
 
     mock "image_resp" {
         request {
-            path = "/"
+            path = "/test"
             verb = "GET"
+
+            // request headers fully support regexp for matching
+            headers = {
+                "Origin" = "www.google.com"
+            }
+        }
+
+        response {
+            response_body = <<EOF
+            Hello World
+            EOF
         }
     }
 }

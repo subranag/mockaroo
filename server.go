@@ -119,20 +119,17 @@ func (s *muxServer) requestLoggingMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *muxServer) addRoutes() {
-	mocks := s.conf.ServerConfig.Mocks
-	router := s.router
-	for _, mock := range mocks {
-		router.HandleFunc(*mock.Request.Path, genHandleFunc(&mock))
+	for _, v := range s.conf.ServerConfig.Mocks {
+		s.router.HandleFunc(*v.Request.Path, genHandleFunc(v))
 	}
 }
 
 // generate the handle function for each mock
-func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
+func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 	return func(resp http.ResponseWriter, req *http.Request) {
 		for key, val := range mock.Response.Headers {
 			resp.Header().Add(key, val)
 		}
-
 		fmt.Fprintf(resp, "%s", *mock.Response.ResponseBody)
 	}
 }

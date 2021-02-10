@@ -44,14 +44,17 @@ type Mock struct {
 }
 
 type Request struct {
-	Path       *string `hcl:"path"`
-	PathPrefix bool    // should this path be a prefix formulated from the Path
-	Verb       *string `hcl:"verb"`
+	Path           *string `hcl:"path"`
+	NormalizedPath string
+	PathPrefix     bool              // should this path be a prefix formulated from the Path
+	Verb           *string           `hcl:"verb"`
+	Headers        map[string]string `hcl:"headers,optional"` // request match headers
+	Queries        map[string]string `hcl:"queries,optional"` // request match headers
 }
 
 type Response struct {
 	ResponseBody *string           `hcl:"response_body"`
-	Headers      map[string]string `hcl:"headers"`
+	Headers      map[string]string `hcl:"headers,optional"`
 }
 
 type InvalidConfigFile struct {
@@ -130,6 +133,26 @@ func (c *Config) validateConfig() error {
 			return err
 		}
 
+		// process headers
+		reqHeaders := mock.Request.Headers
+		for h, v := range reqHeaders {
+			_, err := regexp.Compile(v)
+			if err != nil {
+				errMsg := fmt.Sprintf("invalid request header regexp %s header:\"%s\" in mock \"%s\"", v, h, mock.Name)
+				return invalidConfErr(fp, errMsg)
+			}
+		}
+
+		// process queries
+		reqQueries := mock.Request.Queries
+		for h, v := range reqQueries {
+			_, err := regexp.Compile(v)
+			if err != nil {
+				errMsg := fmt.Sprintf("invalid request query regexp %s key:\"%s\" in mock \"%s\"", v, h, mock.Name)
+				return invalidConfErr(fp, errMsg)
+			}
+		}
+
 		if mock.Response == nil {
 			errMsg := fmt.Sprintf("request section missing for mock \"%s\"", mock.Name)
 			return invalidConfErr(fp, errMsg)
@@ -193,7 +216,8 @@ func validPath(filePath string, mock *Mock) error {
 		}
 	}
 
-	fmt.Println(strings.Join(parts, "/"))
+	// extract and set the normalized path
+	mock.Request.NormalizedPath = strings.Join(parts, "/")
 
 	//path looks good
 	return nil
