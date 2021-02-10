@@ -3,6 +3,7 @@ package mockaroo
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,6 +15,18 @@ const (
 	listenAddrField = "listen_addr"
 	maxPortNum      = 65353
 )
+
+var validVerbs = map[string]interface{}{
+	http.MethodGet:     nil,
+	http.MethodHead:    nil,
+	http.MethodPost:    nil,
+	http.MethodPut:     nil,
+	http.MethodPatch:   nil,
+	http.MethodDelete:  nil,
+	http.MethodConnect: nil,
+	http.MethodOptions: nil,
+	http.MethodTrace:   nil,
+}
 
 type Config struct {
 	// self reference to the config file path
@@ -49,7 +62,7 @@ type Request struct {
 	PathPrefix     bool              // should this path be a prefix formulated from the Path
 	Verb           *string           `hcl:"verb"`
 	Headers        map[string]string `hcl:"headers,optional"` // request match headers
-	Queries        map[string]string `hcl:"queries,optional"` // request match headers
+	Queries        map[string]string `hcl:"queries,optional"` // query match headers
 }
 
 type Response struct {
@@ -131,6 +144,17 @@ func (c *Config) validateConfig() error {
 
 		if err := validPath(fp, &mock); err != nil {
 			return err
+		}
+
+		// validate verb
+		if mock.Request.Verb == nil || strings.TrimSpace(*mock.Request.Verb) == "" {
+			errMsg := fmt.Sprintf("null/missing/empty verb for mock \"%s\" verb can only be (GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH)", mock.Name)
+			return invalidConfErr(fp, errMsg)
+		}
+
+		if _, present := validVerbs[*mock.Request.Verb]; !present {
+			errMsg := fmt.Sprintf("invalid verb \"%v\" for mock \"%s\" verb can only be (GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH)", *mock.Request.Verb, mock.Name)
+			return invalidConfErr(fp, errMsg)
 		}
 
 		// process headers

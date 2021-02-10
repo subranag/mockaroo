@@ -16,7 +16,6 @@ server {
         response {
             headers = {
                 Content-Type = "application/json"
-                Response-Length = "50"
             }
 
             response_body = <<EOF

@@ -14,6 +14,7 @@ import (
 const (
 	// write to the file/create if needed/if exists append
 	logFileFlag = os.O_RDWR | os.O_CREATE | os.O_APPEND
+	// default mode for log file creation
 	logFileMode = os.FileMode(0755)
 )
 
@@ -134,6 +135,7 @@ func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// NewServer creates a mock server with the given configuration
 func NewServer(conf *Config) MockServer {
 	return &muxServer{conf: conf, router: mux.NewRouter()}
 }
