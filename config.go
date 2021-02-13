@@ -3,6 +3,8 @@ package mockaroo
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -66,8 +68,12 @@ type Request struct {
 }
 
 type Response struct {
-	ResponseBody *string           `hcl:"response_body"`
+	Staus        int               `hcl:"status,optional"`
+	ResponseBody *string           `hcl:"body"`
+	ResponseFile *string           `hcl:"file"`
 	Headers      map[string]string `hcl:"headers,optional"`
+	Template     *template.Template
+	Content      []byte
 }
 
 type InvalidConfigFile struct {
@@ -90,8 +96,10 @@ func LoadConfig(filePath *string) (*Config, error) {
 		return nil, &InvalidConfigFile{path: *filePath, message: err.Error()}
 	}
 
-	// config file looks good reference it
+	// config file parsed
 	config.configFilePath = filePath
+
+	// all logical validation
 	if err := config.validateConfig(); err != nil {
 		return nil, err
 	}
@@ -130,12 +138,23 @@ func (c *Config) validateConfig() error {
 		return invalidConfErr(fp, "0 mocks configured, configure mocks using mock:{...} block")
 	}
 
+	// name map to suss out duplicates
+	nameToIndex := make(map[string]int)
+
 	// now validate all mocks
 	for i, mock := range mocks {
-		if strings.TrimSpace(mock.Name) == "" {
+		name := strings.TrimSpace(mock.Name)
+		if name == "" {
 			errMsg := fmt.Sprintf("invalid empty name for block in index %v, please prvide a valid name", i)
 			return invalidConfErr(fp, errMsg)
 		}
+
+		prevIndex, present := nameToIndex[name]
+		if present {
+			errMsg := fmt.Sprintf("mock with name %v already exists in index %v duplicate in %v", name, prevIndex, i)
+			return invalidConfErr(fp, errMsg)
+		}
+		nameToIndex[name] = i
 
 		if mock.Request == nil {
 			errMsg := fmt.Sprintf("request section missing for mock \"%s\"", mock.Name)
@@ -178,8 +197,44 @@ func (c *Config) validateConfig() error {
 		}
 
 		if mock.Response == nil {
-			errMsg := fmt.Sprintf("request section missing for mock \"%s\"", mock.Name)
+			errMsg := fmt.Sprintf("response section missing for mock \"%s\"", mock.Name)
 			return invalidConfErr(fp, errMsg)
+		}
+
+		// if the response Status is set not present or set to 0
+		// just assume the response code is going to be success
+		if mock.Response.Staus == 0 {
+			mock.Response.Staus = 200
+		}
+
+		inValidRange := mock.Response.Staus >= 100 && mock.Response.Staus <= 599
+		// not in valid range
+		if !inValidRange {
+			errMsg := fmt.Sprintf("status code is %v, shoud be 100 <= status <= 599 for mock \"%s\"", mock.Response.Staus, mock.Name)
+			return invalidConfErr(fp, errMsg)
+		}
+
+		if mock.Response.ResponseBody == nil && mock.Response.ResponseFile == nil {
+			errMsg := fmt.Sprintf("response section missing body/file atleast one should be present for \"%s\"", mock.Name)
+			return invalidConfErr(fp, errMsg)
+		}
+
+		if mock.Response.ResponseBody != nil {
+			tmplt, err := template.New(mock.Name).Parse(*mock.Response.ResponseBody)
+			if err != nil {
+				errMsg := fmt.Sprintf("error parsing template for mock \"%s\" error:%s", mock.Name, err.Error())
+				return invalidConfErr(fp, errMsg)
+			}
+			mock.Response.Template = tmplt
+		}
+
+		if mock.Response.ResponseFile != nil {
+			content, err := ioutil.ReadFile(*mock.Response.ResponseFile)
+			if err != nil {
+				errMsg := fmt.Sprintf("error reading content from:%v for mock \"%s\" error:%s", *mock.Response.ResponseFile, mock.Name, err.Error())
+				return invalidConfErr(fp, errMsg)
+			}
+			mock.Response.Content = content
 		}
 	}
 

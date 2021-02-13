@@ -18,7 +18,7 @@ server {
                 Content-Type = "application/json"
             }
 
-            response_body = <<EOF
+            body = <<EOF
             [
                 {
                     "name" : "bob",
@@ -40,7 +40,7 @@ server {
         }
     }
 
-    mock "image_resp" {
+    mock "test_path" {
         request {
             path = "/test"
             verb = "GET"
@@ -52,7 +52,8 @@ server {
         }
 
         response {
-            response_body = <<EOF
+            status = 209
+            body = <<EOF
             Hello World
             EOF
         }

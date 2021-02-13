@@ -105,7 +105,7 @@ func (s *muxServer) requestLoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: add error handling here
-		rl, _ := json.MarshalIndent(requestLogFromRequest(r), "", "    ")
+		rl, _ := json.Marshal(requestLogFromRequest(r))
 
 		// write to std out
 		fmt.Println(string(rl))
