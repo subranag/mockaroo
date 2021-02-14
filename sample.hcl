@@ -1,8 +1,10 @@
 server {
     # the server and port binding typically localhost:<port>/127.0.0.1:<port>/0.0.0.0:<port>
     listen_addr = "localhost:5000"
-    # the certificate if any typically a self signed cert 
-    snake_oil_cert = "/var/tmp/my_snake_oil_cert"
+
+    # provide snake oil cert and key path (both are required to start in https mode)
+    snake_oil_cert = "/home/subbu/snake_oil_cert/server.crt"
+    snake_oil_key = "/home/subbu/snake_oil_cert/server.key"
 
     # the file to which the requests will be teed apart from the console
     request_log_path = "/var/tmp/requests.log"
@@ -56,6 +58,20 @@ server {
             body = <<EOF
             Hello World
             EOF
+        }
+    }
+
+    mock "image" {
+        request {
+            path = "/asset/image"
+            verb = "GET"
+        }
+
+        response {
+            headers = {
+                Content-Type = "image/png"
+            }
+            file = "/home/subbu/development/workspace/game-assets/fairy-tale-backgrounds/_PNG/1/background.png"
         }
     }
 }

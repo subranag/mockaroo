@@ -13,6 +13,13 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
+type ServerMode int
+
+const (
+	HTTP ServerMode = iota
+	HTTPS
+)
+
 const (
 	listenAddrField = "listen_addr"
 	maxPortNum      = 65353
@@ -35,7 +42,7 @@ type Config struct {
 	// used only in this package
 	configFilePath *string
 
-	ServerConfig ServerConf `hcl:"server,block"`
+	ServerConfig *ServerConf `hcl:"server,block"`
 }
 
 func (c *Config) String() string {
@@ -48,8 +55,10 @@ func (c *Config) String() string {
 type ServerConf struct {
 	ListenAddr       *string `hcl:"listen_addr"`
 	SnakeOilCertPath *string `hcl:"snake_oil_cert"`
+	SnakeOilKeyPath  *string `hcl:"snake_oil_key"`
 	RequestLogPath   *string `hcl:"request_log_path"`
 	Mocks            []Mock  `hcl:"mock,block"`
+	Mode             ServerMode
 }
 
 type Mock struct {
@@ -108,11 +117,15 @@ func LoadConfig(filePath *string) (*Config, error) {
 }
 
 func (c *Config) validateConfig() error {
-	listenAddrRegex := regexp.MustCompile(`(?P<host>.+):(?P<port>\d+)`)
 
-	sc := c.ServerConfig
 	fp := *c.configFilePath
 
+	if c.ServerConfig == nil {
+		return invalidConfErr(fp, "server config missing from file")
+	}
+	sc := c.ServerConfig
+
+	listenAddrRegex := regexp.MustCompile(`(?P<host>.+):(?P<port>\d+)`)
 	if sc.ListenAddr == nil || *sc.ListenAddr == "" {
 		errMsg := fmt.Sprintf("%s field in file null or empty", listenAddrField)
 		return invalidConfErr(fp, errMsg)
@@ -130,6 +143,14 @@ func (c *Config) validateConfig() error {
 	if port < 0 || port > maxPortNum {
 		errMsg := fmt.Sprintf("port numbers can only be 0 < port < %v found %v in %s=%s", maxPortNum, port, listenAddrField, *sc.ListenAddr)
 		return invalidConfErr(fp, errMsg)
+	}
+
+	// if key && cert are present then we can start in HTTPS mode
+	bothPresent := sc.SnakeOilCertPath != nil && sc.SnakeOilKeyPath != nil
+
+	sc.Mode = HTTP
+	if bothPresent {
+		sc.Mode = HTTPS
 	}
 
 	mocks := c.ServerConfig.Mocks

@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	// gorilla seems like the best fit, supports a lot of rich matching
+	// and plays well with native golng http
 	"github.com/gorilla/mux"
 )
 
@@ -84,10 +86,13 @@ func (s *muxServer) Start() error {
 	http.Handle("/", s.router)
 
 	// start the server
-	http.ListenAndServe(*s.conf.ServerConfig.ListenAddr, nil)
-
-	// all kosher and dandy
-	return nil
+	// if the server fails to start it will return an error
+	if s.conf.ServerConfig.Mode == HTTPS {
+		return http.ListenAndServeTLS(*s.conf.ServerConfig.ListenAddr,
+			*s.conf.ServerConfig.SnakeOilCertPath,
+			*s.conf.ServerConfig.SnakeOilKeyPath, nil)
+	}
+	return http.ListenAndServe(*s.conf.ServerConfig.ListenAddr, nil)
 }
 
 func (s *muxServer) setupLogFile() (*os.File, error) {
@@ -131,7 +136,27 @@ func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 		for key, val := range mock.Response.Headers {
 			resp.Header().Add(key, val)
 		}
-		fmt.Fprintf(resp, "%s", *mock.Response.ResponseBody)
+		if mock.Response.ResponseBody != nil {
+
+		}
+
+		switch {
+		case mock.Response.Template != nil:
+			// TODO: pass all context data here
+			err := mock.Response.Template.Execute(resp, nil)
+			if err != nil {
+				// raise a 500
+				resp.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(resp, "template execution failed for mock \"%v\" error:%v", mock.Name, err.Error())
+			}
+		case mock.Response.Content != nil:
+			fmt.Fprintf(resp, "%s", mock.Response.Content)
+		default:
+			// we should never be here if we are here mockaroo bunged it
+			// please open an issue
+			resp.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(resp, "BAD BAD BAD mockaroo fix your test cases; mock \"%v\"", mock.Name)
+		}
 	}
 }
 
