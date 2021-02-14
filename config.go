@@ -3,12 +3,12 @@ package mockaroo
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )

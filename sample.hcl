@@ -9,6 +9,55 @@ server {
     # the file to which the requests will be teed apart from the console
     request_log_path = "/var/tmp/requests.log"
 
+    mock "test_api" {
+        request {
+            path = "/"
+            verb = "GET"
+        }
+
+        response {
+            headers = {
+                Transfer-Encoding = "chunked"
+                Content-Type = "application/xml"
+                Date = "Wed, 26 Oct 2016 22:08:54 GMT"
+                x-ms-version = "2016-05-31" 
+                Server : "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
+            }
+
+            body = <<EOF
+<?xml version="1.0" encoding="utf-8"?>  
+<EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net/">  
+  <MaxResults>3</MaxResults>  
+  <Containers>  
+    <Container>  
+      <Name>audio</Name>  
+      <Properties>  
+        <Last-Modified>Wed, 26 Oct 2016 20:39:39 GMT</Last-Modified>  
+        <Etag>0x8CACB9BD7C6B1B2</Etag> 
+        <PublicAccess>container</PublicAccess> 
+      </Properties>  
+    </Container>  
+    <Container>  
+      <Name>images</Name>  
+      <Properties>  
+        <Last-Modified>Wed, 26 Oct 2016 20:39:39 GMT</Last-Modified>  
+        <Etag>0x8CACB9BD7C1EEEC</Etag>  
+      </Properties>  
+    </Container>  
+    <Container>  
+      <Name>textfiles</Name>  
+      <Properties>  
+        <Last-Modified>Wed, 26 Oct 2016 20:39:39 GMT</Last-Modified>  
+        <Etag>0x8CACB9BD7BACAC3</Etag>  
+      </Properties>  
+    </Container>  
+  </Containers>  
+  <NextMarker>video</NextMarker>  
+</EnumerationResults>   
+            EOF
+        }
+    }
+
     mock "user_request" {
         request {
             path = "/users"
