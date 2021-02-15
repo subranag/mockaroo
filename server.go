@@ -126,7 +126,7 @@ func (s *muxServer) requestLoggingMiddleware(next http.Handler) http.Handler {
 
 func (s *muxServer) addRoutes() {
 	for _, v := range s.conf.ServerConfig.Mocks {
-		s.router.HandleFunc(*v.Request.Path, genHandleFunc(v))
+		s.router.HandleFunc(v.Request.NormalizedPath, genHandleFunc(v))
 	}
 }
 
@@ -143,7 +143,7 @@ func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 		switch {
 		case mock.Response.Template != nil:
 			// TODO: pass all context data here
-			err := mock.Response.Template.Execute(resp, nil)
+			err := mock.Response.Template.Execute(resp, NewTemplateContext(req))
 			if err != nil {
 				// raise a 500
 				resp.WriteHeader(http.StatusInternalServerError)

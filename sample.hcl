@@ -72,19 +72,22 @@ server {
             body = <<EOF
             [
                 {
-                    "name" : "bob",
-                    "height" : 5.5,
-                    "age" : 40
+                    "name" : "{{.NewUUID}}",
+                    "height" : {{.RandomFloat 4.0 8.0}},
+                    "age" : {{.RandomInt 21 90}},
+                    "user-agent": "{{.Headers.Get "User-Agent"}}",
+                    "Method": "{{.Method}}",
+                    "RemoteAddr": "{{.RemoteAddr}}"
                 },
                 {
-                    "name" : "Jack",
-                    "height" : 5.11,
-                    "age" : 42
+                    "name" : "{{.NewUUID}}",
+                    "height" : {{.RandomFloat 4.0 8.0}},
+                    "age" : {{.RandomInt 21 90}}
                 },
                 {
-                    "name" : "Brosnann",
-                    "height" : 6.11,
-                    "age" : 32
+                    "name" : "{{.NewUUID}}",
+                    "height" : {{.RandomFloat 4.0 8.0}},
+                    "age" : {{.RandomInt 21 90}}
                 }
             ]
             EOF
@@ -93,7 +96,7 @@ server {
 
     mock "test_path" {
         request {
-            path = "/test"
+            path = "/test/*"
             verb = "GET"
 
             // request headers fully support regexp for matching
@@ -105,7 +108,7 @@ server {
         response {
             status = 209
             body = <<EOF
-            Hello World
+Hello World Nothin
             EOF
         }
     }
