@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/subranag/mockaroo"
 )
 
@@ -17,17 +17,16 @@ func main() {
 		os.Exit(2)
 	}
 
-	fmt.Printf("starting server with config file : %s\n", *mockConfig)
 	// parse config
 	conf, err := mockaroo.LoadConfig(mockConfig)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		log.Fatalf("error loading config :%v", err)
 		os.Exit(2)
 	}
 	s := mockaroo.NewServer(conf)
 
 	if err := s.Start(); err != nil {
-		fmt.Printf("%v\n", err)
+		log.Fatalf("error starting server :%v", err)
 		os.Exit(2)
 	}
 }

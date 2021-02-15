@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	log "github.com/sirupsen/logrus"
 )
 
 type ServerMode int
@@ -37,6 +38,7 @@ var validVerbs = map[string]interface{}{
 	http.MethodTrace:   nil,
 }
 
+//Config is the root config object that holds entire mockaroo config
 type Config struct {
 	// self reference to the config file path
 	// used only in this package
@@ -52,21 +54,26 @@ func (c *Config) String() string {
 	return string(b)
 }
 
+//ServerConf mockaroo server configuration
 type ServerConf struct {
 	ListenAddr       *string `hcl:"listen_addr"`
 	SnakeOilCertPath *string `hcl:"snake_oil_cert"`
 	SnakeOilKeyPath  *string `hcl:"snake_oil_key"`
 	RequestLogPath   *string `hcl:"request_log_path"`
-	Mocks            []Mock  `hcl:"mock,block"`
+	Mocks            []*Mock `hcl:"mock,block"`
 	Mode             ServerMode
 }
 
+//Mock matches a specific request and lays out how to generate a response
+//to the request
 type Mock struct {
 	Name     string    `hcl:"name,label"`
 	Request  *Request  `hcl:"request,block"`
 	Response *Response `hcl:"response,block"`
 }
 
+//Request encapsulates a mock request with all information to match a specific
+//request
 type Request struct {
 	Path           *string `hcl:"path"`
 	NormalizedPath string
@@ -76,6 +83,7 @@ type Request struct {
 	Queries        map[string]string `hcl:"queries,optional"` // query match headers
 }
 
+//Response encapsulates a complete mock response to a mock Request
 type Response struct {
 	Staus        int               `hcl:"status,optional"`
 	ResponseBody *string           `hcl:"body"`
@@ -85,6 +93,7 @@ type Response struct {
 	Content      []byte
 }
 
+//InvalidConfigFile error is raised when given input hcl file fails validation
 type InvalidConfigFile struct {
 	path    string
 	message string
@@ -94,16 +103,22 @@ func (e *InvalidConfigFile) Error() string {
 	return fmt.Sprintf("invalid config file:%s reason:%s", e.path, e.message)
 }
 
+//LoadConfig loads the given config file in path and returns a pointed to Config object
+//if successful other wise returns a InvalidConfigFile error
 func LoadConfig(filePath *string) (*Config, error) {
 	if filePath == nil || strings.TrimSpace(*filePath) == "" {
 		return nil, &InvalidConfigFile{path: *filePath, message: "nil or empty config file path"}
 	}
+
+	log.Infof("config file : \"%v\"", *filePath)
 
 	var config Config
 
 	if err := hclsimple.DecodeFile(*filePath, nil, &config); err != nil {
 		return nil, &InvalidConfigFile{path: *filePath, message: err.Error()}
 	}
+
+	log.Info("config file parsed about to validate...")
 
 	// config file parsed
 	config.configFilePath = filePath
@@ -116,6 +131,9 @@ func LoadConfig(filePath *string) (*Config, error) {
 	return &config, nil
 }
 
+// ALL UN-EXPORTED METHODS
+
+//validateConfig validate the root config object
 func (c *Config) validateConfig() error {
 
 	fp := *c.configFilePath
@@ -144,13 +162,16 @@ func (c *Config) validateConfig() error {
 		errMsg := fmt.Sprintf("port numbers can only be 0 < port < %v found %v in %s=%s", maxPortNum, port, listenAddrField, *sc.ListenAddr)
 		return invalidConfErr(fp, errMsg)
 	}
+	log.Infof("will start server in address: %v", *sc.ListenAddr)
 
 	// if key && cert are present then we can start in HTTPS mode
 	bothPresent := sc.SnakeOilCertPath != nil && sc.SnakeOilKeyPath != nil
 
 	sc.Mode = HTTP
+	log.Info("assuming default mode HTTP")
 	if bothPresent {
 		sc.Mode = HTTPS
+		log.Info("snake oil cert && key present will start in HTTPS mode")
 	}
 
 	mocks := c.ServerConfig.Mocks
@@ -182,7 +203,7 @@ func (c *Config) validateConfig() error {
 			return invalidConfErr(fp, errMsg)
 		}
 
-		if err := validPath(fp, &mock); err != nil {
+		if err := validatePath(fp, mock); err != nil {
 			return err
 		}
 
@@ -257,13 +278,17 @@ func (c *Config) validateConfig() error {
 			}
 			mock.Response.Content = content
 		}
+
+		// mock looks good
+		log.Infof("mock:\"%v\" with path:\"%v\" validates successfully", mock.Name, *mock.Request.Path)
 	}
 
 	// all validation passed we are kosher
 	return nil
 }
 
-func validPath(filePath string, mock *Mock) error {
+//validatePath validate the path of every mock
+func validatePath(filePath string, mock *Mock) error {
 	path := mock.Request.Path
 	if path == nil || strings.TrimSpace(*path) == "" {
 		errMsg := fmt.Sprintf("request path cannot be nil/\"\" for mock \"%s\"", mock.Name)

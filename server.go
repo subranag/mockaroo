@@ -11,6 +11,8 @@ import (
 	// gorilla seems like the best fit, supports a lot of rich matching
 	// and plays well with native golng http
 	"github.com/gorilla/mux"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,40 +22,21 @@ const (
 	logFileMode = os.FileMode(0755)
 )
 
+//MockServer encapsulates a full mockaroo server
 type MockServer interface {
 	Start() error
 }
 
+//muxServer users gorilla mux for routing
 type muxServer struct {
 	conf       *Config
 	router     *mux.Router
 	reqLogFile *os.File
 }
 
-type RequestLog struct {
-	RequestUri    *string     `json:"uri"`
-	Timestamp     *time.Time  `json:"request_time"`
-	Headers       http.Header `json:"headers"`
-	Method        *string     `json:"method"`
-	ContentLength int64       `json:"content_length"`
-	RemoteAddr    *string     `json:"remote_addr"`
-	QueryValues   *url.Values `json:"query_params"`
-}
-
-// take a http request and convert it into loggable entry
-func requestLogFromRequest(r *http.Request) *RequestLog {
-	q := r.URL.Query()
-	t := time.Now().UTC()
-	pt := &t
-	return &RequestLog{
-		RequestUri:    &r.RequestURI,
-		Timestamp:     pt,
-		Headers:       r.Header,
-		Method:        &r.Method,
-		ContentLength: r.ContentLength,
-		RemoteAddr:    &r.RemoteAddr,
-		QueryValues:   &q,
-	}
+// NewServer creates a mock server with the given configuration
+func NewServer(conf *Config) MockServer {
+	return &muxServer{conf: conf, router: mux.NewRouter()}
 }
 
 func (s *muxServer) Start() error {
@@ -95,6 +78,32 @@ func (s *muxServer) Start() error {
 	return http.ListenAndServe(*s.conf.ServerConfig.ListenAddr, nil)
 }
 
+type RequestLog struct {
+	RequestUri    *string     `json:"uri"`
+	Timestamp     *time.Time  `json:"request_time"`
+	Headers       http.Header `json:"headers"`
+	Method        *string     `json:"method"`
+	ContentLength int64       `json:"content_length"`
+	RemoteAddr    *string     `json:"remote_addr"`
+	QueryValues   *url.Values `json:"query_params"`
+}
+
+// take a http request and convert it into loggable entry
+func requestLogFromRequest(r *http.Request) *RequestLog {
+	q := r.URL.Query()
+	t := time.Now().UTC()
+	pt := &t
+	return &RequestLog{
+		RequestUri:    &r.RequestURI,
+		Timestamp:     pt,
+		Headers:       r.Header,
+		Method:        &r.Method,
+		ContentLength: r.ContentLength,
+		RemoteAddr:    &r.RemoteAddr,
+		QueryValues:   &q,
+	}
+}
+
 func (s *muxServer) setupLogFile() (*os.File, error) {
 	lfp := s.conf.ServerConfig.RequestLogPath
 	lf, err := os.OpenFile(*lfp, logFileFlag, logFileMode)
@@ -112,9 +121,6 @@ func (s *muxServer) requestLoggingMiddleware(next http.Handler) http.Handler {
 		// TODO: add error handling here
 		rl, _ := json.Marshal(requestLogFromRequest(r))
 
-		// write to std out
-		fmt.Println(string(rl))
-
 		if s.reqLogFile != nil {
 			fmt.Fprintf(s.reqLogFile, "%s\n", rl)
 		}
@@ -131,13 +137,13 @@ func (s *muxServer) addRoutes() {
 }
 
 // generate the handle function for each mock
-func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
+func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
 	return func(resp http.ResponseWriter, req *http.Request) {
+
+		log.Infof("request matched mock:\"%v\" with path:\"%v\"", mock.Name, *mock.Request.Path)
+
 		for key, val := range mock.Response.Headers {
 			resp.Header().Add(key, val)
-		}
-		if mock.Response.ResponseBody != nil {
-
 		}
 
 		switch {
@@ -146,8 +152,10 @@ func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 			err := mock.Response.Template.Execute(resp, NewTemplateContext(req))
 			if err != nil {
 				// raise a 500
+				errMsg := fmt.Sprintf("template execution failed for mock \"%v\" error:%v", mock.Name, err.Error())
+				log.Errorf("%s", errMsg)
 				resp.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(resp, "template execution failed for mock \"%v\" error:%v", mock.Name, err.Error())
+				fmt.Fprint(resp, errMsg)
 			}
 		case mock.Response.Content != nil:
 			fmt.Fprintf(resp, "%s", mock.Response.Content)
@@ -158,9 +166,4 @@ func genHandleFunc(mock Mock) func(http.ResponseWriter, *http.Request) {
 			fmt.Fprintf(resp, "BAD BAD BAD mockaroo fix your test cases; mock \"%v\"", mock.Name)
 		}
 	}
-}
-
-// NewServer creates a mock server with the given configuration
-func NewServer(conf *Config) MockServer {
-	return &muxServer{conf: conf, router: mux.NewRouter()}
 }
