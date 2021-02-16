@@ -131,8 +131,22 @@ func (s *muxServer) requestLoggingMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *muxServer) addRoutes() {
-	for _, v := range s.conf.ServerConfig.Mocks {
-		s.router.HandleFunc(v.Request.NormalizedPath, genHandleFunc(v))
+	for _, m := range s.conf.ServerConfig.Mocks {
+		r := s.router.HandleFunc(m.Request.NormalizedPath, genHandleFunc(m)).Methods(*m.Request.Verb)
+
+		// if headers are present add them to the route
+		if m.Request.Headers != nil {
+			for k, v := range m.Request.Headers {
+				r.HeadersRegexp(k, v)
+			}
+		}
+
+		// if query params are present add them as well
+		if m.Request.Queries != nil {
+			for k, v := range m.Request.Queries {
+				r.Queries(k, v)
+			}
+		}
 	}
 }
 

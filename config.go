@@ -164,6 +164,17 @@ func (c *Config) validateConfig() error {
 	}
 	log.Infof("will start server in address: %v", *sc.ListenAddr)
 
+	if c.ServerConfig.RequestLogPath == nil || strings.TrimSpace(*c.ServerConfig.RequestLogPath) == "" {
+		// create a temp file and defer closing it but get the path
+		tmpfile, err := ioutil.TempFile("", "mockaroo")
+		if err != nil {
+			return invalidConfErr(fp, fmt.Sprintf("request_log_path not provided and cannot create temp file reason:%v", err.Error()))
+		}
+		defer tmpfile.Close()
+		tmpfileName := tmpfile.Name()
+		c.ServerConfig.RequestLogPath = &tmpfileName
+	}
+
 	// if key && cert are present then we can start in HTTPS mode
 	bothPresent := sc.SnakeOilCertPath != nil && sc.SnakeOilKeyPath != nil
 

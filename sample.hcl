@@ -13,6 +13,9 @@ server {
         request {
             path = "/"
             verb = "GET"
+            queries = {
+                list = ""
+            }
         }
 
         response {
@@ -21,7 +24,7 @@ server {
                 Content-Type = "application/xml"
                 Date = "Wed, 26 Oct 2016 22:08:54 GMT"
                 x-ms-version = "2016-05-31" 
-                Server : "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
+                Server = "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
             }
 
             body = <<EOF
@@ -101,7 +104,7 @@ server {
 
             // request headers fully support regexp for matching
             headers = {
-                "Origin" = "www.google.com"
+                "Origin" = ".*"
             }
         }
 
