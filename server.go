@@ -156,9 +156,22 @@ func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
 
 		log.Infof("request matched mock:\"%v\" with path:\"%v\"", mock.Name, *mock.Request.Path)
 
+		// delay if we need to
+		if mock.Response.Delay != nil {
+			randomDelay := int64(0)
+			if mock.Response.Delay.MaxMillis-mock.Response.Delay.MinMillis > 0 {
+				randomDelay = mock.Response.Delay.MaxMillis - mock.Response.Delay.MinMillis
+			}
+			sleepFor := mock.Response.Delay.MinMillis + randomDelay
+			time.Sleep(time.Duration(sleepFor) * time.Millisecond)
+		}
+
 		for key, val := range mock.Response.Headers {
 			resp.Header().Add(key, val)
 		}
+
+		// write the status
+		resp.WriteHeader(mock.Response.Staus)
 
 		switch {
 		case mock.Response.Template != nil:

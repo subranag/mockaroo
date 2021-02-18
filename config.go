@@ -89,8 +89,14 @@ type Response struct {
 	ResponseBody *string           `hcl:"body"`
 	ResponseFile *string           `hcl:"file"`
 	Headers      map[string]string `hcl:"headers,optional"`
+	Delay        *Delay            `hcl:"delay,block"`
 	Template     *template.Template
 	Content      []byte
+}
+
+type Delay struct {
+	MaxMillis int64 `hcl:"max_millis"`
+	MinMillis int64 `hcl:"min_millis"`
 }
 
 //InvalidConfigFile error is raised when given input hcl file fails validation
@@ -288,6 +294,18 @@ func (c *Config) validateConfig() error {
 				return invalidConfErr(fp, errMsg)
 			}
 			mock.Response.Content = content
+		}
+
+		// validate delay
+		if mock.Response.Delay != nil {
+			minDelay := mock.Response.Delay.MinMillis
+			maxDelay := mock.Response.Delay.MaxMillis
+
+			if minDelay < 0 || maxDelay < 0 || maxDelay < minDelay {
+				errMsg := fmt.Sprintf("delay min_millis, max_millis >= 0 min_millis <= max_millis and for mock \"%s\" ", mock.Name)
+				errMsg = fmt.Sprintf("%s found min_millis:%v max_millis:%v", errMsg, minDelay, maxDelay)
+				return invalidConfErr(fp, errMsg)
+			}
 		}
 
 		// mock looks good

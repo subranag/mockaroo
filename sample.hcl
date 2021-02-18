@@ -27,6 +27,11 @@ server {
                 Server = "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
             }
 
+            delay {
+                min_millis = 500
+                max_millis = 1000
+            }
+
             body = <<EOF
 <?xml version="1.0" encoding="utf-8"?>  
 <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net/">  
@@ -99,7 +104,7 @@ server {
 
     mock "test_path" {
         request {
-            path = "/test/*"
+            path = "/test/{operation}"
             verb = "GET"
 
             // request headers fully support regexp for matching
@@ -109,9 +114,9 @@ server {
         }
 
         response {
-            status = 209
+            status = 409
             body = <<EOF
-Hello World Nothin
+Hello World {{.PathVariable "operation"}}
             EOF
         }
     }
