@@ -112,8 +112,13 @@ func (e *InvalidConfigFile) Error() string {
 //LoadConfig loads the given config file in path and returns a pointed to Config object
 //if successful other wise returns a InvalidConfigFile error
 func LoadConfig(filePath *string) (*Config, error) {
-	if filePath == nil || strings.TrimSpace(*filePath) == "" {
-		return nil, &InvalidConfigFile{path: *filePath, message: "nil or empty config file path"}
+
+	if filePath == nil {
+		return nil, &InvalidConfigFile{path: "", message: "nil config file path"}
+	}
+
+	if strings.TrimSpace(*filePath) == "" {
+		return nil, &InvalidConfigFile{path: *filePath, message: "empty config file path"}
 	}
 
 	log.Infof("config file : \"%v\"", *filePath)
