@@ -24,6 +24,8 @@ const (
 
 //MockServer encapsulates a full mockaroo server
 type MockServer interface {
+	//Start starts the mock server and if the server cannot be started
+	//returns an error
 	Start() error
 }
 
@@ -37,6 +39,10 @@ type muxServer struct {
 // NewServer creates a mock server with the given configuration
 func NewServer(conf *Config) MockServer {
 	return &muxServer{conf: conf, router: mux.NewRouter()}
+}
+
+func (s *muxServer) getRouter() *mux.Router {
+	return s.router
 }
 
 func (s *muxServer) Start() error {
