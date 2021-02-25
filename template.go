@@ -29,8 +29,8 @@ type TemplateContext struct {
 	//Headers are key value pairs from request headers
 	Headers http.Header
 
-	//FormData is the data from request form and urls
-	FormData url.Values
+	//Form is all the form data from the request including Query params
+	Form url.Values
 
 	//PathVars is the path variables captured as a part of the path
 	PathVars map[string]string
@@ -76,7 +76,7 @@ func NewTemplateContext(req *http.Request) *TemplateContext {
 		Host:       &req.Host,
 		RemoteAddr: &req.RemoteAddr,
 		Headers:    req.Header,
-		FormData:   req.Form,
+		Form:       req.Form,
 		PathVars:   pathVarsOrEmpty(req),
 		uuid:       make([]byte, 16), // 16 bytes for UUID
 	}

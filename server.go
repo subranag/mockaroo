@@ -162,6 +162,13 @@ func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
 
 		log.Infof("request matched mock:\"%v\" with path:\"%v\"", mock.Name, *mock.Request.Path)
 
+		// parse form if needed
+		err := req.ParseForm()
+		if err != nil {
+			resp.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(resp, "parsing form data failed error:%v", err)
+		}
+
 		// delay if we need to
 		if mock.Response.Delay != nil {
 			randomDelay := int64(0)
