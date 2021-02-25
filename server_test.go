@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -182,6 +183,84 @@ func TestHeaderMatchingWorksCorrectly(t *testing.T) {
 			t.Errorf("expected response body:donkey doo but found:%v", responseBody)
 		}
 	})
+}
+
+func TestResponseDelayWorksCorrectly(t *testing.T) {
+	sampleConfig := `
+	server {
+		listen_addr = "localhost:5000"
+		mock "hello_world" {
+			request {
+				path = "/hello"
+				verb = "GET"
+			}
+			response {
+				body = <<EOF
+				world
+				EOF
+
+				headers = {
+					foo = "bar"
+				}
+
+				delay {
+					min_millis = 100
+					max_millis = 100
+				}
+			}
+		}
+	}
+	`
+	configHarness(t, sampleConfig, func(configPath string) {
+
+		muxServer := loadConfigAndGetServer(t, configPath, sampleConfig)
+
+		// make test HTTP request
+		req, err := http.NewRequest("GET", "/hello", nil)
+		if err != nil {
+			t.Errorf("cannot create new request error:%v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		start := time.Now()
+		muxServer.router.ServeHTTP(rr, req)
+		elapsed := time.Since(start)
+
+		if elapsed.Milliseconds() < 100 {
+			t.Errorf("configured delay was 100 millis but delay laster only for:%v", elapsed.Milliseconds())
+		}
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("expected 200 but HTTP request failed with:%v", rr.Code)
+		}
+
+		if rr.HeaderMap.Get("foo") != "bar" {
+			t.Errorf("expected response header foo to be bar but was:%v", rr.HeaderMap.Get("foo"))
+		}
+
+		responseBody := strings.TrimSpace(string(rr.Body.Bytes()))
+		if responseBody != "world" {
+			t.Errorf("expected response body:world but found:%v", responseBody)
+		}
+	})
+}
+
+func TestRequestLogFromRequestWorksCorrectly(t *testing.T) {
+	req, err := http.NewRequest("GET", "/hello?foo=bar", nil)
+
+	if err != nil {
+		t.Errorf("cannot create new request error:%v", err)
+	}
+
+	reql := requestLogFromRequest(req)
+
+	if reql == nil {
+		t.Error("request log expected to be non nil")
+	}
+
+	if *reql.Method != "GET" {
+		t.Errorf("expected method GET but found %v", *reql.Method)
+	}
 }
 
 func createGetRequest(t *testing.T, query string, headers map[string]string) *http.Request {
