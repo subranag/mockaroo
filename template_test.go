@@ -25,4 +25,9 @@ func TestTemplateContextFunctions(t *testing.T) {
 	if rint < 10 || rint > 15 {
 		t.Errorf("expected random int to be between 10 and 15 but found:%v", rint)
 	}
+
+	rfloat := tc.RandomFloat(1.0, 3.0)
+	if rfloat < 1.0 || rfloat > 3.0 {
+		t.Errorf("expected random int to be between 1.0 and 3.0 but found:%v", rfloat)
+	}
 }
