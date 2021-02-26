@@ -1,38 +1,38 @@
 server {
-    # the server and port binding typically localhost:<port>/127.0.0.1:<port>/0.0.0.0:<port>
-    listen_addr = "localhost:5000"
+  # the server and port binding typically localhost:<port>/127.0.0.1:<port>/0.0.0.0:<port>
+  listen_addr = "localhost:5000"
 
-    # provide snake oil cert and key path (both are required to start in https mode)
-    snake_oil_cert = "/home/subbu/snake_oil_cert/server.crt"
-    snake_oil_key = "/home/subbu/snake_oil_cert/server.key"
+  # provide snake oil cert and key path (both are required to start in https mode)
+  snake_oil_cert = "/home/subbu/snake_oil_cert/server.crt"
+  snake_oil_key  = "/home/subbu/snake_oil_cert/server.key"
 
-    # the file to which the requests will be teed apart from the console
-    request_log_path = "/var/tmp/requests.log"
+  # the file to which the requests will be teed apart from the console
+  request_log_path = "/var/tmp/requests.log"
 
-    mock "test_api" {
-        request {
-            path = "/"
-            verb = "GET"
-            queries = {
-                list = ""
-            }
-        }
+  mock "test_api" {
+    request {
+      path = "/"
+      verb = "GET"
+      queries = {
+        list = ""
+      }
+    }
 
-        response {
-            headers = {
-                Transfer-Encoding = "chunked"
-                Content-Type = "application/xml"
-                Date = "Wed, 26 Oct 2016 22:08:54 GMT"
-                x-ms-version = "2016-05-31" 
-                Server = "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
-            }
+    response {
+      headers = {
+        Transfer-Encoding = "chunked"
+        Content-Type      = "application/xml"
+        Date              = "Wed, 26 Oct 2016 22:08:54 GMT"
+        x-ms-version      = "2016-05-31"
+        Server            = "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
+      }
 
-            delay {
-                min_millis = 500
-                max_millis = 1000
-            }
+      delay {
+        min_millis = 500
+        max_millis = 1000
+      }
 
-            body = <<EOF
+      body = <<EOF
 <?xml version="1.0" encoding="utf-8"?>  
 <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net/">  
   <MaxResults>3</MaxResults>  
@@ -63,21 +63,21 @@ server {
   <NextMarker>video</NextMarker>  
 </EnumerationResults>   
             EOF
-        }
+    }
+  }
+
+  mock "user_request" {
+    request {
+      path = "/users"
+      verb = "GET"
     }
 
-    mock "user_request" {
-        request {
-            path = "/users"
-            verb = "GET"
-        }
+    response {
+      headers = {
+        Content-Type = "application/json"
+      }
 
-        response {
-            headers = {
-                Content-Type = "application/json"
-            }
-
-            body = <<EOF
+      body = <<EOF
             [
                 {
                     "name" : "{{.NewUUID}}",
@@ -99,39 +99,39 @@ server {
                 }
             ]
             EOF
-        }
+    }
+  }
+
+  mock "test_path" {
+    request {
+      path = "/test/{operation}"
+      verb = "GET"
+
+      // request headers fully support regexp for matching
+      headers = {
+        "Origin" = ".*"
+      }
     }
 
-    mock "test_path" {
-        request {
-            path = "/test/{operation}"
-            verb = "GET"
-
-            // request headers fully support regexp for matching
-            headers = {
-                "Origin" = ".*"
-            }
-        }
-
-        response {
-            status = 409
-            body = <<EOF
+    response {
+      status = 409
+      body   = <<EOF
 Hello World {{.PathVariable "operation"}}
             EOF
-        }
+    }
+  }
+
+  mock "image" {
+    request {
+      path = "/asset/image"
+      verb = "GET"
     }
 
-    mock "image" {
-        request {
-            path = "/asset/image"
-            verb = "GET"
-        }
-
-        response {
-            headers = {
-                Content-Type = "image/png"
-            }
-            file = "/home/subbu/development/workspace/game-assets/fairy-tale-backgrounds/_PNG/1/background.png"
-        }
+    response {
+      headers = {
+        Content-Type = "image/png"
+      }
+      file = "/home/subbu/development/workspace/game-assets/fairy-tale-backgrounds/_PNG/1/background.png"
     }
+  }
 }

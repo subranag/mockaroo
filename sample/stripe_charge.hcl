@@ -1,19 +1,19 @@
 server {
-	listen_addr = "localhost:5001"
+  listen_addr = "localhost:5001"
 
-    
-	mock "create_charge" {
-		request {
-			path = "/v1/charges"
-			verb = "POST"
-	    } 
-        response {
 
-            headers = {
-                Content-Type = "application/json"
-            }
+  mock "create_charge" {
+    request {
+      path = "/v1/charges"
+      verb = "POST"
+    }
+    response {
 
-		    body = <<EOF
+      headers = {
+        Content-Type = "application/json"
+      }
+
+      body = <<EOF
 {
   "id": "ch_1IOmoN2eZvKYlo2CVukCCtcR",
   "object": "charge",
@@ -98,23 +98,23 @@ server {
   "source": "{{.Form.Get "source"}}"
 }
 EOF
-		}
-	
     }
 
-    mock "capture_charge" {
-        request {
-			path = "/v1/charges/{chargeId}/capture"
-			verb = "POST"
-	    }
+  }
 
-        response {
+  mock "capture_charge" {
+    request {
+      path = "/v1/charges/{chargeId}/capture"
+      verb = "POST"
+    }
 
-            headers = {
-                Content-Type = "application/json"
-            }
+    response {
 
-		    body = <<EOF
+      headers = {
+        Content-Type = "application/json"
+      }
+
+      body = <<EOF
 {
   "id": "{{.PathVariable "chargeId"}}",
   "object": "charge",
@@ -198,21 +198,21 @@ EOF
   "transfer_group": null
 }
 EOF
-		}
     }
+  }
 
-    mock "get_charge" {
-		request {
-			path = "/v1/charges/{chargeId}"
-			verb = "GET"
-	    } 
-        response {
+  mock "get_charge" {
+    request {
+      path = "/v1/charges/{chargeId}"
+      verb = "GET"
+    }
+    response {
 
-            headers = {
-                Content-Type = "application/json"
-            }
+      headers = {
+        Content-Type = "application/json"
+      }
 
-		    body = <<EOF
+      body = <<EOF
 {
   "id": "{{.PathVariable "chargeId"}}",
   "object": "charge",
@@ -296,23 +296,23 @@ EOF
   "transfer_group": null
 }
 EOF
-		}
-	
     }
 
-    
-    mock "list_charge" {
-		request {
-			path = "/v1/charges"
-			verb = "GET"
-	    } 
-        response {
+  }
 
-            headers = {
-                Content-Type = "application/json"
-            }
 
-		    body = <<EOF
+  mock "list_charge" {
+    request {
+      path = "/v1/charges"
+      verb = "GET"
+    }
+    response {
+
+      headers = {
+        Content-Type = "application/json"
+      }
+
+      body = <<EOF
 {
   "object": "list",
   "url": "/v1/charges",
@@ -403,7 +403,7 @@ EOF
   ]
 }
 EOF
-		}
-	
     }
+
+  }
 }
