@@ -40,3 +40,8 @@ That's it; read the complete documentation for all the features available for co
 ## Why ?
 There are several reasons why I always felt the need for something like mockaroo in my local dev box, these are some of them
 - I am experimenting with a new API and want to send a live working version to my teammates, simply publish a mock file
+- I am a UX developer who wants to get started on UI work and wants to communicate by API needs to the back end developer
+- I wand to publish API documentation that is "ALIVE" simply download mock file and code to it 
+- Pblish integration test contract that can be run and verified locally in the dev box
+
+... and many more
