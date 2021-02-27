@@ -1,6 +1,173 @@
 server {
   listen_addr = "localhost:5002"
 
+  mock "create_database" {
+    request {
+      path = "/dbs"
+      verb = "POST"
+    }
+
+    response {
+
+      status = 201
+
+      headers = {
+        Cache-Control              = "no-store, no-cache"
+        Pragma                     = "no-cache"
+        Content-Type               = "application/json"
+        Content-Location           = "https://contosomarketing.documents.azure.com/dbs/volcanodb"
+        Server                     = "Microsoft-HTTPAPI/2.0"
+        Strict-Transport-Security  = "max-age=31536000"
+        x-ms-last-state-change-utc = "Sun, 29 Nov 2015 02:25:34.442 GMT"
+        etag                       = "00000100-0000-0000-0000-564f7b5e0000"
+        x-ms-resource-quota        = "databases=100;"
+        x-ms-resource-usage        = "databases=15;"
+        x-ms-schemaversion         = "1.1"
+        x-ms-session-token         = "860"
+        x-ms-request-charge        = "2"
+        x-ms-serviceversion        = "version=1.5.57.3"
+        x-ms-activity-id           = "d319e186-8e5f-4861-bcd0-59fb249769f3"
+        x-ms-gatewayversion        = "version=1.5.57.3"
+        Date                       = "Tue, 08 Dec 2015 19:41:21 GMT"
+      }
+
+      body = <<EOF
+{  
+    "id": "{{index .JsonBody "id"}}",  
+    "_rid": "Sl8fAA==",  
+    "_ts": 1448049502,  
+    "_self": "dbs\/Sl8fAA==\/",  
+    "_etag": "\"00000100-0000-0000-0000-564f7b5e0000\"",  
+    "_colls": "colls\/",  
+    "_users": "users\/"  
+} 
+EOF
+    }
+  }
+
+  mock "get_database" {
+    request {
+      path = "/dbs/{databaseId}"
+      verb = "GET"
+    }
+
+    response {
+
+      headers = {
+        Cache-Control              = "no-store, no-cache"
+        Pragma                     = "no-cache"
+        Content-Type               = "application/json"
+        Content-Location           = "https://contosomarketing.documents.azure.com/dbs/volcanodb"
+        Server                     = "Microsoft-HTTPAPI/2.0"
+        Strict-Transport-Security  = "max-age=31536000"
+        x-ms-last-state-change-utc = "Sun, 29 Nov 2015 02:25:34.442 GMT"
+        etag                       = "00000100-0000-0000-0000-564f7b5e0000"
+        x-ms-resource-quota        = "databases=100;"
+        x-ms-resource-usage        = "databases=15;"
+        x-ms-schemaversion         = "1.1"
+        x-ms-session-token         = "860"
+        x-ms-request-charge        = "2"
+        x-ms-serviceversion        = "version=1.5.57.3"
+        x-ms-activity-id           = "d319e186-8e5f-4861-bcd0-59fb249769f3"
+        x-ms-gatewayversion        = "version=1.5.57.3"
+        Date                       = "Tue, 08 Dec 2015 19:41:21 GMT"
+      }
+
+      body = <<EOF
+{  
+    "id": "{{.PathVariable "chargeId"}}",  
+    "_rid": "Sl8fAA==",  
+    "_ts": 1448049502,  
+    "_self": "dbs\/Sl8fAA==\/",  
+    "_etag": "\"00000100-0000-0000-0000-564f7b5e0000\"",  
+    "_colls": "colls\/",  
+    "_users": "users\/"  
+} 
+EOF
+    }
+  }
+
+  mock "create_container" {
+    request {
+      path = "/dbs/{databaseId}/colls/"
+      verb = "POST"
+    }
+
+    response {
+
+      status = 201
+
+      headers = {
+        Cache-Control                 = "no-store, no-cache"
+        Pragma                        = "no-cache"
+        Transfer-Encoding             = "chunked"
+        Content-Type                  = "application/json"
+        Server                        = "Microsoft-HTTPAPI/2.0"
+        Strict-Transport-Security     = "max-age=31536000"
+        x-ms-last-state-change-utc    = "Mon, 28 Mar 2016 20:00:12.142 GMT"
+        etag                          = "00005900-0000-0000-0000-56f9a2630000"
+        collection-partition-index    = "0"
+        collection-service-index      = "24"
+        x-ms-schemaversion            = "1.1"
+        x-ms-alt-content-path         = "dbs/testdb"
+        x-ms-quorum-acked-lsn         = "9"
+        x-ms-current-write-quorum     = "3"
+        x-ms-current-replica-set-size = "4"
+        x-ms-request-charge           = "4.95"
+        x-ms-serviceversion           = "version=1.6.52.5"
+        x-ms-activity-id              = "05d0a3b5-4504-446a-96f4-bef3a3408595"
+        x-ms-session-token            = "0:10"
+        Set-Cookie                    = "x-ms-session-token#0=10; Domain=querydemo.documents.azure.com; Path=/dbs/PD5DAA==/colls/PD5DALigDgw="
+        Set-Cookie                    = "x-ms-session-token=10; Domain=querydemo.documents.azure.com; Path=/dbs/PD5DAA==/colls/PD5DALigDgw="
+        x-ms-gatewayversion           = "version=1.6.52.5"
+        Date                          = "Mon, 28 Mar 2016 21:30:12 GMT"
+      }
+
+      body = <<EOF
+{  
+  "id": "{{index .JsonBody "id"}}",  
+  "indexingPolicy": {  
+    "indexingMode": "consistent",  
+    "automatic": true,  
+    "includedPaths": [  
+      {  
+        "path": "/*",  
+        "indexes": [  
+          {  
+            "kind": "Range",  
+            "dataType": "String",  
+            "precision": -1  
+          },  
+          {  
+            "kind": "Range",  
+            "dataType": "Number",  
+            "precision": -1  
+          }  
+        ]  
+      }  
+    ],  
+    "excludedPaths": []  
+  },  
+  "partitionKey": {  
+    "paths": [  
+      "{{index .JsonBody "partitionKey" "paths" 0}}"  
+    ],  
+    "kind": "{{index .JsonBody "partitionKey" "kind"}}"  
+  },  
+  "_rid": "PD5DALigDgw=",  
+  "_ts": 1459200611,  
+  "_self": "dbs/PD5DAA==/colls/PD5DALigDgw=/",  
+  "_etag": "\"00005900-0000-0000-0000-56f9a2630000\"",  
+  "_docs": "docs/",  
+  "_sprocs": "sprocs/",  
+  "_triggers": "triggers/",  
+  "_udfs": "udfs/",  
+  "_conflicts": "conflicts/"  
+}
+EOF
+    }
+  }
+
   mock "query_document" {
 
     request {

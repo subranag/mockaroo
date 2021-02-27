@@ -1,12 +1,16 @@
 package mockaroo
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const nicePrime = 2011
@@ -31,6 +35,9 @@ type TemplateContext struct {
 
 	//Form is all the form data from the request including Query params
 	Form url.Values
+
+	//JsonBody will be non nil if the request body can be parsed as JSON
+	JsonBody map[string]interface{}
 
 	//PathVars is the path variables captured as a part of the path
 	PathVars map[string]string
@@ -70,6 +77,16 @@ func (tc *TemplateContext) RandomFloat(min, max float32) float32 {
 
 //NewTemplateContext returns a pointer to TemplateContext
 func NewTemplateContext(req *http.Request) *TemplateContext {
+
+	// if the request body is non nil try to coerce it into JSON
+	var jsonBody map[string]interface{}
+	if req.Body != nil {
+		bodyBytes, _ := ioutil.ReadAll(req.Body)
+		if err := json.Unmarshal(bodyBytes, &jsonBody); err != nil {
+			log.Infof("could not coerce JSON out of req:%v", req.RequestURI)
+		}
+	}
+
 	return &TemplateContext{
 		Method:     &req.Method,
 		Protocol:   &req.Proto,
@@ -77,6 +94,7 @@ func NewTemplateContext(req *http.Request) *TemplateContext {
 		RemoteAddr: &req.RemoteAddr,
 		Headers:    req.Header,
 		Form:       req.Form,
+		JsonBody:   jsonBody,
 		PathVars:   pathVarsOrEmpty(req),
 		uuid:       make([]byte, 16), // 16 bytes for UUID
 	}

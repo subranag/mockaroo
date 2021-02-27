@@ -71,6 +71,16 @@ func (s *muxServer) Start() error {
 	// add all middlewares
 	s.router.Use(s.requestLoggingMiddleware)
 
+	// add the not found handler for logging
+	s.router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		log.Warnf("request path :%v lead to 404", req.RequestURI)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "request not found",
+		})
+	})
+
 	// let the router handle all the requests
 	http.Handle("/", s.router)
 
