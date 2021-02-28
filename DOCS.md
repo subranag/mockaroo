@@ -1,6 +1,13 @@
 # Mock-a-(roo)🦘 Docs
 This page contains detailed documentation on how to use mockaroo to create complex HTTP(S) mocking solutions, click on each section to see how to proceed
 
+  * [Starting Mockaroo](#starting-mockaroo)
+  * [The Server Section](#the-server-section)
+  * [The Mock Blocks](#the-mock-blocks)
+  * [Matching Query Params](#matching-query-params)
+  * [Matching Headers](#matching-headers)
+  * [Accessing Request Body](#acccessing-request-body)
+
 ## Starting Mockaroo
 Starting mockaroo is simple download mockaroo binary for your target platform and drop it in you PATH if required, then simply start mockaroo by pointing it to you mock `hcl` file e.g.
 ```
@@ -216,3 +223,42 @@ server {
   }
 }
 ```
+
+## Accessing Request Body
+if the RAW quest body can be parsed as JSON the entire parsed JSON is available to the template context when sending back response let us look at example below
+
+```hcl
+server {
+
+  listen_addr = "localhost:5000"
+
+  mock "request_body_in_template" {
+    request {
+      path = "/request/body"
+      verb = "POST"
+    }
+
+    response {
+      // if the request body can be parsed as JSON the entire request is available 
+      // as dictionary an array references you can access them in templates using 
+      // the GOLANG template index function see example below
+      body = <<EOF
+id is {{index .JsonBody "id"}}
+array values are {{index .JsonBody "value" 0}} {{index .JsonBody "value" 1}} {{index .JsonBody "value" 2}}
+            EOF
+    }
+  }
+
+}
+```
+
+After starting the server with the above configuration you can verify the output using cURL commands shown below
+```
+curl -X POST -H "Content-Type: application/json" -d'{"id":"a", "value":[1, 2, 3]}' "http://localhost:5000/request/body"
+```
+expected output should be 
+```
+id is a
+array values are 1 2 3
+```
+you can write some very powerful mocks having the entire request JSON in the template context

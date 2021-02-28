@@ -145,4 +145,17 @@ server {
             EOF
     }
   }
+
+  mock "request_body_in_template" {
+    request {
+      path = "/request/body"
+      verb = "POST"
+    }
+    response {
+      body = <<EOF
+id is {{index .JsonBody "id"}}
+array values are {{index .JsonBody "value" 0}} {{index .JsonBody "value" 1}} {{index .JsonBody "value" 2}}
+            EOF
+    }
+  }
 }
