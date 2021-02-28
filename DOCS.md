@@ -6,7 +6,7 @@ This page contains detailed documentation on how to use mockaroo to create compl
   * [The Mock Blocks](#the-mock-blocks)
   * [Matching Query Params](#matching-query-params)
   * [Matching Headers](#matching-headers)
-  * [Accessing Request Body](#acccessing-request-body)
+  * [Accessing Request Body](#accessing-request-body)
 
 ## Starting Mockaroo
 Starting mockaroo is simple download mockaroo binary for your target platform and drop it in you PATH if required, then simply start mockaroo by pointing it to you mock `hcl` file e.g.
