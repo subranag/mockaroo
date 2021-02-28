@@ -85,7 +85,7 @@ type Request struct {
 
 //Response encapsulates a complete mock response to a mock Request
 type Response struct {
-	Staus        int               `hcl:"status,optional"`
+	Status       int               `hcl:"status,optional"`
 	ResponseBody *string           `hcl:"body"`
 	ResponseFile *string           `hcl:"file"`
 	Headers      map[string]string `hcl:"headers,optional"`
@@ -260,14 +260,14 @@ func (c *Config) validateConfig() error {
 
 		// if the response Status is set not present or set to 0
 		// just assume the response code is going to be success
-		if mock.Response.Staus == 0 {
-			mock.Response.Staus = 200
+		if mock.Response.Status == 0 {
+			mock.Response.Status = 200
 		}
 
-		inValidRange := mock.Response.Staus >= 100 && mock.Response.Staus <= 599
+		inValidRange := mock.Response.Status >= 100 && mock.Response.Status <= 599
 		// not in valid range
 		if !inValidRange {
-			errMsg := fmt.Sprintf("status code is %v, shoud be 100 <= status <= 599 for mock \"%s\"", mock.Response.Staus, mock.Name)
+			errMsg := fmt.Sprintf("status code is %v, shoud be 100 <= status <= 599 for mock \"%s\"", mock.Response.Status, mock.Name)
 			return invalidConfErr(fp, errMsg)
 		}
 

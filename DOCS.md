@@ -49,36 +49,170 @@ there can be several mock blocks, typically you can declare all the mocks requir
 ```hcl
 server {
 
-    listen_addr = "localhost:5000"
+  listen_addr = "localhost:5000"
 
-    // you can declare several mock sections and give each mock a meaningful name
-    mock "get_user" {
-        request {
-            path = "/user/{userId}"
-            verb = "GET"
-        }
-        response {
-            body = <<EOF
-            user id {{.PathVariable "userId"}}
-            EOF
-        }
+  // you can declare several mock sections and give each mock a meaningful name
+  mock "get_user" {
+    request {
+      path = "/user/{userId}"
+      verb = "GET"
     }
-
-    // another mock with the same HTTP path but different verb "POST"
-    mock "post_user" {
-        request {
-            path = "/user/{userId}"
-            verb = "POST"
-        }
-        response {
-            # NOTE: response code is 201 created
-            code = 201
-
-            body = <<EOF
-            user id {{.PathVariable "userId"}}
+    response {
+      body = <<EOF
+            user id from GET {{.PathVariable "userId"}}
             EOF
-        }
     }
+  }
+
+  // another mock with the same HTTP path but different verb "POST"
+  mock "post_user" {
+    request {
+      path = "/user/{userId}"
+      verb = "POST"
+    }
+    response {
+      # NOTE: response status is 201 created
+      status = 201
+
+      body = <<EOF
+            user id from POST {{.PathVariable "userId"}}
+            EOF
+    }
+  }
 }
 ```
-> 🚨 **NOTE**: there is order to matching mocks , mock should be declared in order from *MOST SPECIFIC MATCH* to *LEAST SPECIFIC MATCH* in descending order: otherwise you might have wrong matching (please see relevant section)
+> 🚨 **NOTE**: there is order to matching mocks , mocks should be declared in decreasing order of *specificity in matching* from the *MOST SPECIFIC MATCH* to *LEAST SPECIFIC MATCH* otherwise matching may not work as expected
+
+## Matching Query Params
+you can specify query parameters to match query params on incoming request, please look at the example below to see how to do it, you can match query params to value 
+
+```hcl
+server {
+
+  listen_addr = "localhost:5000"
+
+  mock "get_beer_lager" {
+    request {
+      path = "/beer"
+      verb = "GET"
+
+      // you can match criteria on query params 
+      // you can specify multiple query params
+      /*
+      queries = {
+        a = "b"
+        c = "b" 
+        ...
+      }
+      */
+      queries = {
+        type = "lager"
+      }
+    }
+    response {
+      body = <<EOF
+            my beer is {{.Form.Get "type"}}, brand is {{.Fake.BeerMalt}}
+            EOF
+    }
+  }
+
+  mock "get_beer_ipa" {
+    request {
+      path = "/beer"
+      verb = "GET"
+
+      // here we match ipa
+      queries = {
+        type = "ipa"
+      }
+    }
+    response {
+
+      body = <<EOF
+            my beer is {{.Form.Get "type"}}, brand is {{.Fake.BeerHop}}
+            EOF
+    }
+  }
+}
+```
+> ℹ️ **NOTE**: currently regex matching is not available for query params but will be added in the future
+
+## Matching Headers
+the headers in the HTTP request can be matched as well, take a look at the example below to see how header matching works, documentation is in the mock itself
+
+```hcl
+server {
+
+  listen_addr = "localhost:5000"
+
+    mock "get_patient" {
+    request {
+      path = "/patient/{patientId}"
+      verb = "GET"
+
+      // you can match headers as regex as well as plain string 
+      // all GET requests that come in with Origin "Clinic .*" will
+      // match this request
+      // you can specify several headers as well
+      headers = {
+        "Origin" = "Clinic .*"
+      }
+    }
+    response {
+      // you can specify headers for response as well you can specify 
+      // any number of headers  
+      headers = {
+        Content-Type = "application/json"
+      }
+
+      body = <<EOF
+{
+    "patient_id": "{{.PathVariable "patientId"}}",
+    "patient_name": "{{.Fake.Name}}",
+    "email": "{{.Fake.Email}}",
+    "street": "{{.Fake.Street}}",
+    "state": "{{.Fake.State}}",
+    "ssn": "{{.Fake.SSN}}",
+    "phone": "{{.Fake.PhoneFormatted}}",
+    "source": "Clinic/{{.Headers.Get "Origin"}}"
+}
+            EOF
+    }
+  }
+
+  mock "get_patient_hospital" {
+    request {
+      path = "/patient/{patientId}"
+      verb = "GET"
+
+      // you can match headers as regex as well as plain string 
+      // all GET requests that come in with Origin "Clinic .*" will
+      // match this request
+      // you can specify several headers as well
+      headers = {
+        "Origin" = "Hospital .*"
+      }
+    }
+    response {
+      // you can specify headers for response as well you can specify 
+      // any number of headers  
+      headers = {
+        Content-Type = "application/json"
+      }
+
+      body = <<EOF
+{
+    "patient_id": "{{.PathVariable "patientId"}}",
+    "patient_name": "{{.Fake.Name}}",
+    "email": "{{.Fake.Email}}",
+    "street": "{{.Fake.Street}}",
+    "state": "{{.Fake.State}}",
+    "ssn": "{{.Fake.SSN}}",
+    "phone": "{{.Fake.PhoneFormatted}}",
+    "source": "Hospital/{{.Headers.Get "Origin"}}"
+}
+            EOF
+    }
+  }
+}
+```

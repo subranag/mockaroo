@@ -9,7 +9,7 @@ import (
 	"time"
 
 	// gorilla seems like the best fit, supports a lot of rich matching
-	// and plays well with native golng http
+	// and plays well with native golang http
 	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
@@ -194,7 +194,7 @@ func genHandleFunc(mock *Mock) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// write the status
-		resp.WriteHeader(mock.Response.Staus)
+		resp.WriteHeader(mock.Response.Status)
 
 		switch {
 		case mock.Response.Template != nil:
