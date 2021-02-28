@@ -1,12 +1,18 @@
 # Mock-a-(roo)🦘 Docs
 This page contains detailed documentation on how to use mockaroo to create complex HTTP(S) mocking solutions, click on each section to see how to proceed
 
+  * [All Examples](#all-examples)
   * [Starting Mockaroo](#starting-mockaroo)
   * [The Server Section](#the-server-section)
   * [The Mock Blocks](#the-mock-blocks)
   * [Matching Query Params](#matching-query-params)
   * [Matching Headers](#matching-headers)
   * [Accessing Request Body](#accessing-request-body)
+
+## All Examples
+all examples that have been listed below have been coded into a single big mock file which can be found [here](https://github.com/subranag/mockaroo/blob/master/sample/uber_example.hcl)
+
+the required information is available in both the places here in the docs and the **uber big file** containing all examples
 
 ## Starting Mockaroo
 Starting mockaroo is simple download mockaroo binary for your target platform and drop it in you PATH if required, then simply start mockaroo by pointing it to you mock `hcl` file e.g.
