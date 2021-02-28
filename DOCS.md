@@ -10,13 +10,13 @@ the mock files are written in HCL https://www.terraform.io/docs/language/syntax/
 > ⚠️**NOTE**: the file extension should be HCL otherwise you might get an error
 
 
-## The server section 
+## The Server Section 
 the server section in the mock HCL deals with specifying HTTP(S) server related configuration, see sample file with documentation as well in HCL 
 ```hcl
 server {
   /* 
     the server and port binding typically of the form
-    localhost:<port>127.0.0.1:<port>/0.0.0.0:<port> 
+    localhost:<port> OR 127.0.0.1:<port> OR 0.0.0.0:<port> 
     you can also bind it to a specific ip and a port that is available 
   */   
   listen_addr = "localhost:5000"
@@ -39,4 +39,45 @@ server {
   request_log_path = "/var/tmp/requests.log"
   ...
 ```
-> ⚠️**NOTE**: BOTH snake_oil_cert and snake_oil_key should be present to start the server in HTTPS mode
+> ⚠️**NOTE**: the server will start in HTTPS mode if and only if BOTH snake_oil_cert and snake_oil_key are present
+
+## The Mock Blocks
+after the server section is declared in the HCL file you need declare *one or more* mock blocks in the mockaroo file 
+
+there can be several mock blocks, typically you can declare all the mocks required for a single use-case or scenario in a single mock HCL file, see example below where two mocks are declared 
+
+```
+server {
+    ...
+    // you can declare several mock sections and give each mock a meaningful name
+    mock "get_user" {
+        request {
+            path = "/user/{userId}"
+            verb = "GET"
+        }
+        response {
+            body = <<EOF
+            user id {{.PathVariable "userId"}}
+            EOF
+        }
+    }
+
+    // another mock with the same HTTP path but different verb "GET"
+    mock "post_user" {
+        request {
+            path = "/user/{userId}"
+            verb = "GET"
+        }
+        response {
+            # NOTE: response code is 201 created
+            code = 201
+
+            body = <<EOF
+            user id {{.PathVariable "userId"}}
+            EOF
+        }
+    }
+    ...
+}
+```
+> 🚨 **NOTE**: there is order to matching mocks , mock should be declared in order from *MOST SPECIFIC MATCH* to *LEAST SPECIFIC MATCH* in descending order: otherwise you might have wrong matching (please see relevant section)
