@@ -9,6 +9,11 @@ server {
     }
     response {
 
+      delay {
+        min_millis = 400
+        max_millis = 800
+      }
+
       headers = {
         Content-Type = "application/json"
       }
@@ -26,16 +31,16 @@ server {
   "balance_transaction": "txn_1032HU2eZvKYlo2CEPtcnUvl",
   "billing_details": {
     "address": {
-      "city": null,
-      "country": null,
-      "line1": null,
+      "city": "{{.Fake.City}}",
+      "country": "{{.Fake.CountryAbr}}",
+      "line1": "{{.RandomInt 10 200}} {{.Fake.Street}}",
       "line2": null,
-      "postal_code": null,
-      "state": null
+      "postal_code": "{{.Fake.Zip}}",
+      "state": "{{.Fake.State}}"
     },
-    "email": null,
-    "name": "Jenny Rosen",
-    "phone": null
+    "email": "{{.Fake.Email}}",
+    "name": "{{.Fake.Name}}",
+    "phone": "{{.Fake.PhoneFormatted}}"
   },
   "calculated_statement_descriptor": null,
   "captured": false,
@@ -77,8 +82,8 @@ server {
     },
     "type": "card"
   },
-  "receipt_email": null,
-  "receipt_number": null,
+  "receipt_email": "{{.Fake.Name}}",
+  "receipt_number": "{{.Fake.PhoneFormatted}}",
   "receipt_url": "https://pay.stripe.com/receipts/acct_1032D82eZvKYlo2C/ch_1IOmoN2eZvKYlo2CVukCCtcR/rcpt_J0oR1uwQjlm4YLcYF54frnBgVBO5oC0",
   "refunded": false,
   "refunds": {
@@ -118,7 +123,7 @@ EOF
 {
   "id": "{{.PathVariable "chargeId"}}",
   "object": "charge",
-  "amount": 100,
+  "amount": {{.RandomInt 5 100}},
   "amount_captured": 0,
   "amount_refunded": 0,
   "application": null,
@@ -127,16 +132,16 @@ EOF
   "balance_transaction": "txn_1032HU2eZvKYlo2CEPtcnUvl",
   "billing_details": {
     "address": {
-      "city": null,
-      "country": null,
-      "line1": null,
+      "city": "{{.Fake.City}}",
+      "country": "{{.Fake.CountryAbr}}",
+      "line1": "{{.RandomInt 10 200}} {{.Fake.Street}}",
       "line2": null,
-      "postal_code": null,
-      "state": null
+      "postal_code": "{{.Fake.Zip}}",
+      "state": "{{.Fake.State}}"
     },
-    "email": null,
-    "name": "Jenny Rosen",
-    "phone": null
+    "email": "{{.Fake.Email}}",
+    "name": "{{.Fake.Name}}",
+    "phone": "{{.Fake.PhoneFormatted}}"
   },
   "calculated_statement_descriptor": null,
   "captured": false,
@@ -178,8 +183,8 @@ EOF
     },
     "type": "card"
   },
-  "receipt_email": null,
-  "receipt_number": null,
+  "receipt_email": "{{.Fake.Name}}",
+  "receipt_number": "{{.Fake.PhoneFormatted}}",
   "receipt_url": "https://pay.stripe.com/receipts/acct_1032D82eZvKYlo2C/ch_1IOmoN2eZvKYlo2CVukCCtcR/rcpt_J0oR1uwQjlm4YLcYF54frnBgVBO5oC0",
   "refunded": false,
   "refunds": {
@@ -216,7 +221,7 @@ EOF
 {
   "id": "{{.PathVariable "chargeId"}}",
   "object": "charge",
-  "amount": 100,
+  "amount": {{.RandomInt 5 100}},
   "amount_captured": 0,
   "amount_refunded": 0,
   "application": null,
@@ -225,16 +230,16 @@ EOF
   "balance_transaction": "txn_1032HU2eZvKYlo2CEPtcnUvl",
   "billing_details": {
     "address": {
-      "city": null,
-      "country": null,
-      "line1": null,
+      "city": "{{.Fake.City}}",
+      "country": "{{.Fake.CountryAbr}}",
+      "line1": "{{.RandomInt 10 200}} {{.Fake.Street}}",
       "line2": null,
-      "postal_code": null,
-      "state": null
+      "postal_code": "{{.Fake.Zip}}",
+      "state": "{{.Fake.State}}"
     },
-    "email": null,
-    "name": "Jenny Rosen",
-    "phone": null
+    "email": "{{.Fake.Email}}",
+    "name": "{{.Fake.Name}}",
+    "phone": "{{.Fake.PhoneFormatted}}"
   },
   "calculated_statement_descriptor": null,
   "captured": false,
@@ -276,8 +281,8 @@ EOF
     },
     "type": "card"
   },
-  "receipt_email": null,
-  "receipt_number": null,
+  "receipt_email": "{{.Fake.Name}}",
+  "receipt_number": "{{.Fake.PhoneFormatted}}",
   "receipt_url": "https://pay.stripe.com/receipts/acct_1032D82eZvKYlo2C/ch_1IOmoN2eZvKYlo2CVukCCtcR/rcpt_J0oR1uwQjlm4YLcYF54frnBgVBO5oC0",
   "refunded": false,
   "refunds": {
@@ -330,16 +335,16 @@ EOF
       "balance_transaction": "txn_1032HU2eZvKYlo2CEPtcnUvl",
       "billing_details": {
         "address": {
-          "city": null,
-          "country": null,
-          "line1": null,
+          "city": "{{.Fake.City}}",
+          "country": "{{.Fake.CountryAbr}}",
+          "line1": "{{.RandomInt 10 200}} {{.Fake.Street}}",
           "line2": null,
-          "postal_code": null,
-          "state": null
+          "postal_code": "{{.Fake.Zip}}",
+          "state": "{{.Fake.State}}"
         },
-        "email": null,
-        "name": "Jenny Rosen",
-        "phone": null
+        "email": "{{.Fake.Email}}",
+        "name": "{{.Fake.Name}}",
+        "phone": "{{.Fake.PhoneFormatted}}"
       },
       "calculated_statement_descriptor": null,
       "captured": false,
@@ -381,8 +386,8 @@ EOF
         },
         "type": "card"
       },
-      "receipt_email": null,
-      "receipt_number": null,
+      "receipt_email": "{{.Fake.Name}}",
+      "receipt_number": "{{.Fake.PhoneFormatted}}",
       "receipt_url": "https://pay.stripe.com/receipts/acct_1032D82eZvKYlo2C/ch_1IOmoN2eZvKYlo2CVukCCtcR/rcpt_J0oR1uwQjlm4YLcYF54frnBgVBO5oC0",
       "refunded": false,
       "refunds": {

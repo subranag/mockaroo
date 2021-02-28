@@ -3,6 +3,7 @@ module github.com/subranag/mockaroo
 go 1.14
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.2.2
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/hcl/v2 v2.8.2
 	github.com/sirupsen/logrus v1.7.0

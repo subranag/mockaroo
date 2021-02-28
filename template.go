@@ -10,12 +10,14 @@ import (
 
 	"github.com/gorilla/mux"
 
+	fakeit "github.com/brianvoe/gofakeit/v6"
 	log "github.com/sirupsen/logrus"
 )
 
 const nicePrime = 2011
 
 var stableRandom = rand.New(rand.NewSource(nicePrime))
+var stableFake = fakeit.New(nicePrime)
 
 type TemplateContext struct {
 	//Method is the HTTP method for the request (GET, POST, PUT, etc.)
@@ -41,6 +43,9 @@ type TemplateContext struct {
 
 	//PathVars is the path variables captured as a part of the path
 	PathVars map[string]string
+
+	//Fake contains the context to fake data from "github.com/brianvoe/gofakeit"
+	Fake *fakeit.Faker
 
 	// bytes of pseudo random UUID
 	uuid []byte
@@ -96,6 +101,7 @@ func NewTemplateContext(req *http.Request) *TemplateContext {
 		Form:       req.Form,
 		JsonBody:   jsonBody,
 		PathVars:   pathVarsOrEmpty(req),
+		Fake:       stableFake,
 		uuid:       make([]byte, 16), // 16 bytes for UUID
 	}
 }
