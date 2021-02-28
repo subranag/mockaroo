@@ -48,7 +48,9 @@ there can be several mock blocks, typically you can declare all the mocks requir
 
 ```hcl
 server {
-    ...
+
+    listen_addr = "localhost:5000"
+
     // you can declare several mock sections and give each mock a meaningful name
     mock "get_user" {
         request {
@@ -62,11 +64,11 @@ server {
         }
     }
 
-    // another mock with the same HTTP path but different verb "GET"
+    // another mock with the same HTTP path but different verb "POST"
     mock "post_user" {
         request {
             path = "/user/{userId}"
-            verb = "GET"
+            verb = "POST"
         }
         response {
             # NOTE: response code is 201 created
@@ -77,7 +79,6 @@ server {
             EOF
         }
     }
-    ...
 }
 ```
 > 🚨 **NOTE**: there is order to matching mocks , mock should be declared in order from *MOST SPECIFIC MATCH* to *LEAST SPECIFIC MATCH* in descending order: otherwise you might have wrong matching (please see relevant section)
