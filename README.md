@@ -3,9 +3,10 @@ comprehensive HTTP/HTTPS interface mocking tool for all your development and tes
 - supports complex request matching (path/query/headers/verb)
 - mock response can be fully templated; with request body/query/header params in template context
 - config language is *hashicorp HCL*, **human readable with single line and multiline comments**, perfect for documenting your interface
-- mock complex HTTP API and send the mockaroo file to client developer for resting, communicate intent clearly, document your API
+- mock complex HTTP API and send the mockaroo file to client developer for testing; communicate intent clearly; document your API
 - run integration tests locally with ease
-- add delays to mock real world response times  
+- add delays to mock real world response times
+- full support for *generating fake data* using https://github.com/brianvoe/gofakeit
 - support for HTTPS in case you need it
 
 ## Getting Started: Mock HTTP Server in under a minute
@@ -39,9 +40,15 @@ That's it; read the complete documentation for all the features available for co
 
 ## Why ?
 There are several reasons why I always felt the need for something like mockaroo in my local dev box, these are some of them
-- I am experimenting with a new API and want to send a live working version to my teammates, simply publish a mock file
-- I am a UX developer who wants to get started on UI work and wants to communicate by API needs to the back end developer
+- I am experimenting with a new API and want to send a *live working version* with use-cases to my teammates, simply publish a mock file
+- I am a UX developer who wants to get started on UI work and wants to communicate *my API needs* to the back end developer, with clear documentation
 - I wand to publish API documentation that is "ALIVE" simply download mock file and code to it 
-- Pblish integration test contract that can be run and verified locally in the dev box
+- Publish integration test contract that can be run and verified locally in the dev box
+- Test my client code against exhaustive fake data that almost looks real 
+- I want to test my service locally but *the service I am using does not run locally*
+- I can check-in my mock HCL file with code so that other developers can contribute to the use cases and enhance the tests
 
-... and many more
+... and many more, if any of these reasons resonate with you then mockaroo might be a good fit for you 
+
+## Show me the goods 
+Just to show that mockaroo is a great fit for mocking needs I have created a samples folder https://github.com/subranag/mockaroo/tree/master/sample which contains several detailed examples I will keep adding to the list in the future, please check it out
