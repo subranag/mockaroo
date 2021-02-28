@@ -52,3 +52,8 @@ There are several reasons why I always felt the need for something like mockaroo
 
 ## Show me the goods 
 Just to show that mockaroo is a great fit for mocking needs I have created a samples folder https://github.com/subranag/mockaroo/tree/master/sample which contains several detailed examples I will keep adding to the list in the future, please check it out
+
+## Acknowledgments
+This project would have not been possible without these two awesome projects 
+- **Gorilla Mux** : awesome router and route matching library https://github.com/gorilla/mux
+- **Gofakeit**    : awesome library in golang to create fake data https://github.com/brianvoe/gofakeit
