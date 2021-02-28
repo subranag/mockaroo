@@ -46,7 +46,7 @@ after the server section is declared in the HCL file you need declare *one or mo
 
 there can be several mock blocks, typically you can declare all the mocks required for a single use-case or scenario in a single mock HCL file, see example below where two mocks are declared 
 
-```
+```hcl
 server {
     ...
     // you can declare several mock sections and give each mock a meaningful name
