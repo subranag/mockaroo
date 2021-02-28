@@ -36,7 +36,7 @@ mockaroo -conf ./mock.hcl
 ```
 curl "http://localhost:5000/hello/buddy"
 ```
-That's it; read the complete documentation for all the features available for complex mocking
+That's it; read the [complete documentation](https://github.com/subranag/mockaroo/blob/master/DOCS.md) for all the features available for complex mocking
 
 ## Why ?
 There are several reasons why I always felt the need for something like mockaroo in my local dev box, these are some of them
@@ -57,3 +57,7 @@ Just to show that mockaroo is a great fit for mocking needs I have created a sam
 This project would have not been possible without these two awesome projects 
 - **Gorilla Mux** : awesome router and route matching library https://github.com/gorilla/mux
 - **Gofakeit**    : awesome library in golang to create fake data https://github.com/brianvoe/gofakeit
+- **Hashicorp Config Language**: really awesome config language which is the basis of terraform https://github.com/hashicorp/hcl
+
+## Documentation 
+detailed documentation is available [here](https://github.com/subranag/mockaroo/blob/master/DOCS.md), the [sample](https://github.com/subranag/mockaroo/tree/master/sample) folder contains som really cool examples from top service providers
