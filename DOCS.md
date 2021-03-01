@@ -11,6 +11,7 @@ This page contains detailed documentation on how to use mockaroo to create compl
   * [Capturing Path Variables](#capturing-path-variables)
   * [Template Execution Response](#template-execution-response)
   * [File in Response](#file-in-response)
+  * [The Complete Example](#the-complete-example)
 
 ## All Examples
 all examples that have been listed below have been coded into a single big mock file which can be found [here](https://github.com/subranag/mockaroo/blob/master/sample/uber_example.hcl)
@@ -355,4 +356,9 @@ Now if you run the cURL command
 curl "http://localhost:5000/etc/passwd"
 ```
 you should see you passwd file
+
+## The Complete Example
+all of the above examples have been tested and have been dumped into a single big uber example file with all the relevant documentation please take a look [here](https://github.com/subranag/mockaroo/blob/master/sample/uber_example.hcl)
+
+# Happy Mocking!!!!
 
