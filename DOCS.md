@@ -19,7 +19,7 @@ all examples that have been listed below have been coded into a single big mock 
 the required information is available in both the places here in the docs and the **uber big file** containing all examples
 
 ## Starting Mockaroo
-Starting mockaroo is simple download mockaroo binary for your target platform and drop it in you PATH if required, then simply start mockaroo by pointing it to you mock `hcl` file e.g.
+Starting mockaroo is simple [download](https://github.com/subranag/mockaroo/releases) mockaroo binary for your target platform and drop it in you PATH if required, you may have to do `chmod +x` for linux and darwin and rename the file if you like, then simply start mockaroo by pointing it to you mock `hcl` file e.g.
 ```
 mockaroo -conf ./<path_to_your_hcl_file>
 ```

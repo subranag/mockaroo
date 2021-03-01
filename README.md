@@ -10,7 +10,7 @@ comprehensive HTTP/HTTPS interface mocking tool for all your development and tes
 - support for HTTPS in case you need it
 
 ## Getting Started: Mock HTTP Server in under a minute
-- Step 1: download mockaroo binary
+- Step 1: download mockaroo latest binary [here](https://github.com/subranag/mockaroo/releases) for your target platform and rename the file to `mockaroo` you wil have to do `chmod +x mockaroo` for darwin and linux
 - Step 2: add this content to a file `mock.hcl`
 ```hcl
 server {
