@@ -8,6 +8,9 @@ This page contains detailed documentation on how to use mockaroo to create compl
   * [Matching Query Params](#matching-query-params)
   * [Matching Headers](#matching-headers)
   * [Accessing Request Body](#accessing-request-body)
+  * [Capturing Path Variables](#capturing-path-variables)
+  * [Template Execution Response](#template-execution-response)
+  * [File in Response](#file-in-response)
 
 ## All Examples
 all examples that have been listed below have been coded into a single big mock file which can be found [here](https://github.com/subranag/mockaroo/blob/master/sample/uber_example.hcl)
@@ -268,3 +271,88 @@ id is a
 array values are 1 2 3
 ```
 you can write some very powerful mocks having the entire request JSON in the template context
+
+## Capturing Path Variables
+path variables can be captured and are available in context during template execution, if you do not want to specify a path variable you can also specify a `*` which will match any text in that path component please checkout the example below 
+
+```hcl
+server {
+
+  listen_addr = "localhost:5000"
+  
+  mock "capture_path_variables" {
+    // you can capture path variables by just naming them 
+    // if you do not want them stored in a named variable then just mention *
+    // the variable will still be captured and be present in the template context
+    // the path variable name will of the form pvarN where N is the 1 based index from 
+    // the start of the path components see the repose template for usage
+    request {
+      path = "/path/{a}/{b}/*/{d}"
+      verb = "GET"
+    }
+    response {
+      body = <<EOF
+      the request was for path/{{.PathVariable "a"}}/{{.PathVariable "b"}}/{{.PathVariable "pvar4"}}/{{.PathVariable "d"}}
+            EOF
+    }
+  }
+}
+```
+Now fire this cURL request
+```
+curl "http://localhost:5000/test/this/path/correctly"
+```
+the response should be 
+```
+      the request was for path/test/this/path/correctly
+```
+
+## Template Execution Response
+The power of golang template engine is available for the response rending, the complete reference for how go template engine works is outside the scope of this document, but a very comprehensive tutorial can be found [here](https://learn.hashicorp.com/tutorials/nomad/go-template-syntax?in=nomad/templates)
+
+The custom functions available during the template executions are listed here 
+
+| Template Call | Description |
+|---------------| ------------|
+| `{{.Method}}` | Request method GET/PUT/POST etc|
+| `{{.Protocol}}` | HTTP/1.0 HTTP/1.1 etc|
+| `{{.Host}}` | host from which the request came|
+| `{{.RemoteAddr}}` | remote address|
+| `{{.Headers.Get "key"}}` | get the value of request headers|
+| `{{.Form.Get "key"}}` | form contains all url query params and POST form data|
+| `{{.PathVars "key"}}` | this template variable contains the key value map of all path variables|
+| `{{.Fake.<FakeFunction>}}` | using the Fake context you can call all fake functions on gofakeit list of all functions [here](https://github.com/brianvoe/gofakeit#functions) e.g. `{{.Fake.PhoneFormatted}}`|
+| `{{.PathVariable "key"}}` | same as PathVars gets the value of path variable captured|
+| `{{.RandomInt min max}}` | generated a random int in the interval [min, max) e.g. `{{.RandomInt 5 10}}`|
+| `{{.RandomFloat min max}}` | generated a random int in the interval [min, max) e.g. `{{.RandomFloat 1.1 2.2}}`|
+
+> ⚠️**NOTE**: all random data generation is stable i.e. they will same random values in sequence, the seed prime for generation is `2011`
+
+## File In Response
+you can include a file path as response the contents of the file will be sent as response this combined with the right MIME type can allow you to send binary response for a mock see the example below
+
+```hcl
+server {
+
+  listen_addr = "localhost:5000"
+
+  mock "file_request" {
+    request {
+      path = "/etc/passwd"
+      verb = "GET"
+    }
+    response {
+      headers = {
+        Content-Type = "text/plain"
+      }
+      file = "/etc/passwd"
+    }
+  }
+}
+```
+Now if you run the cURL command 
+```
+curl "http://localhost:5000/etc/passwd"
+```
+you should see you passwd file
+

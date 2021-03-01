@@ -158,4 +158,34 @@ array values are {{index .JsonBody "value" 0}} {{index .JsonBody "value" 1}} {{i
             EOF
     }
   }
+
+  mock "capture_path_variables" {
+    // you can capture path variables by just naming them 
+    // if you do not want them stored in a named variable then just mention *
+    // the variable will still be captured and be present in the template context
+    // the path variable name will of the form pvarN where N is the 1 based index from 
+    // the start of the path components see the repose template for usage
+    request {
+      path = "/path/{a}/{b}/*/{d}"
+      verb = "GET"
+    }
+    response {
+      body = <<EOF
+      the request was for path/{{.PathVariable "a"}}/{{.PathVariable "b"}}/{{.PathVariable "pvar4"}}/{{.PathVariable "d"}}
+            EOF
+    }
+  }
+
+  mock "file_request" {
+    request {
+      path = "/etc/passwd"
+      verb = "GET"
+    }
+    response {
+      headers = {
+        Content-Type = "text/plain"
+      }
+      file = "/etc/passwd"
+    }
+  }
 }
